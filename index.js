@@ -1,5 +1,6 @@
 'use strict';
 
+const { count } = require('console');
 const fs = require('fs');
 
 // ====================================
@@ -299,17 +300,90 @@ const fs = require('fs');
 //   console.log(input.reduce((acc, cur) => acc + cur.size, 0));
 // }
 
-function main() {
-  const input = fs.readFileSync('inputs/11')
+// function main() {
+//   const input = fs.readFileSync('inputs/11')
+//     .toString()
+//     .trim()
+//     .split('\r\n\r\n')
+//     .map((grp) =>
+//       grp.split('\r\n')
+//         .map((per) => new Set(per.split('')))
+//         .reduce((acc, per) => new Set([...acc].filter(x => per.has(x)))) // Intersection of persons
+//     );
+//   console.log(input.reduce((acc, cur) => acc + cur.size, 0));
+// }
+
+// ====================================
+
+function reduceToObj(obj, [k, v]) {
+  obj[k] = v;
+  return obj;
+}
+
+function getRules() {
+  return fs.readFileSync('inputs/13')
     .toString()
     .trim()
-    .split('\r\n\r\n')
-    .map((grp) =>
-      grp.split('\r\n')
-        .map((per) => new Set(per.split('')))
-        .reduce((acc, per) => new Set([...acc].filter(x => per.has(x)))) // Intersection of persons
-    );
-  console.log(input.reduce((acc, cur) => acc + cur.size, 0));
+    .split('\r\n')
+    .map((ln) => {
+      let [hd, tl] = ln.trim().slice(0, -1).split(' contain ');
+      hd = hd.slice(0, -5)
+      if (tl === 'no other bags') {
+        return [hd, {}];
+      } else {
+        const tail = tl.split(', ')
+          .map((poss) => {
+            const m = poss.match(/(\d+) (.*) bags?/)
+            return [m[2], Number.parseInt(m[1], 10)];
+          })
+          .reduce(reduceToObj, {});
+        return [hd, tail];
+      }
+    })
+    .reduce(reduceToObj, {});
+}
+
+// Rules map is {<bag a>: {<bag b>: <n>}}.
+// This means bag a contains n bag b's.
+// Reversing this map produces:
+// {<bag b>: [<bag a>]}
+// which means that bag b can be contained in bag a.
+function reverseRules(rules) {
+  return Object.entries(rules)
+    .reduce((acc, [head, tail]) => {
+      Object.keys(tail).forEach((key) => {
+        if (acc.hasOwnProperty(key)) {
+          acc[key].push(head);
+        } else {
+          acc[key] = [head];
+        }
+      });
+      return acc;
+    }, {});
+}
+
+// function main() {
+//   const reversed = reverseRules(getRules());
+//   let queue = reversed['shiny gold'];
+//   const possibilities = new Set();
+//   while (queue.length > 0) {
+//     const curr = queue.pop();
+//     possibilities.add(curr);
+//     if (reversed.hasOwnProperty(curr)) {
+//       queue = queue.concat(reversed[curr]);
+//     }
+//   }
+//   console.log(possibilities.size);
+// }
+
+function contained(rules, bag) {
+  return Object.entries(rules[bag])
+    .reduce((acc, [key, value]) => acc + value * (1 + contained(rules, key)), 0);
+}
+
+function main() {
+  const rules = getRules();
+  console.log(contained(rules, 'shiny gold'));
 }
 
 // ====================================
