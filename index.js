@@ -243,13 +243,29 @@ const fs = require('fs');
 
 // ====================================
 
-function toBinary(str, zero, one) {
-  return str.split('')
-    .reduce((acc, cur) => (cur === zero) ? 2 * acc : 2 * acc + 1, 0);
-}
+// function toBinary(str, zero, one) {
+//   return str.split('')
+//     .reduce((acc, cur) => (cur === zero) ? 2 * acc : 2 * acc + 1, 0);
+// }
+
+// // function main() {
+// //   const seat = fs.readFileSync('inputs/9')
+// //     .toString()
+// //     .split('\r\n')
+// //     .filter(ln => ln.length > 0)
+// //     .map((ln) => {
+// //       const row = toBinary(ln.slice(0, 7), 'F', 'B');
+// //       const col = toBinary(ln.slice(7), 'L', 'R');
+// //       const seat = row * 8 + col;
+// //       console.log(`${row}  ${col}  ${seat}`);
+// //       return seat;
+// //     })
+// //     .reduce((acc, cur) => cur > acc ? cur : acc, 0);
+// //     console.log(seat);
+// // }
 
 // function main() {
-//   const seat = fs.readFileSync('inputs/9')
+//   const seats = fs.readFileSync('inputs/9')
 //     .toString()
 //     .split('\r\n')
 //     .filter(ln => ln.length > 0)
@@ -259,29 +275,41 @@ function toBinary(str, zero, one) {
 //       const seat = row * 8 + col;
 //       console.log(`${row}  ${col}  ${seat}`);
 //       return seat;
-//     })
-//     .reduce((acc, cur) => cur > acc ? cur : acc, 0);
-//     console.log(seat);
+//     }).sort((a, b) => a - b);
+//   console.log(seats);
+//   for (let i = 0; i < seats.length - 1; i++) {
+//     if (seats[i] !== seats[i + 1] - 1) {
+//       console.log(seats[i] + 1);
+//     }
+//   }
+// }
+
+// ====================================
+
+// function main() {
+//   const input = fs.readFileSync('inputs/11')
+//     .toString()
+//     .split('\r\n\r\n')
+//     .map((grp) => {
+//       return grp.split('\r\n')
+//         .map((per) => new Set(per.split('')))
+//         .reduce((acc, per) => new Set([...acc, ...per]), new Set()); // Union of persons
+//     });
+//   console.log(input);
+//   console.log(input.reduce((acc, cur) => acc + cur.size, 0));
 // }
 
 function main() {
-  const seats = fs.readFileSync('inputs/9')
+  const input = fs.readFileSync('inputs/11')
     .toString()
-    .split('\r\n')
-    .filter(ln => ln.length > 0)
-    .map((ln) => {
-      const row = toBinary(ln.slice(0, 7), 'F', 'B');
-      const col = toBinary(ln.slice(7), 'L', 'R');
-      const seat = row * 8 + col;
-      console.log(`${row}  ${col}  ${seat}`);
-      return seat;
-    }).sort((a, b) => a - b);
-  console.log(seats);
-  for (let i = 0; i < seats.length - 1; i++) {
-    if (seats[i] !== seats[i + 1] - 1) {
-      console.log(seats[i] + 1);
-    }
-  }
+    .trim()
+    .split('\r\n\r\n')
+    .map((grp) =>
+      grp.split('\r\n')
+        .map((per) => new Set(per.split('')))
+        .reduce((acc, per) => new Set([...acc].filter(x => per.has(x)))) // Intersection of persons
+    );
+  console.log(input.reduce((acc, cur) => acc + cur.size, 0));
 }
 
 // ====================================
