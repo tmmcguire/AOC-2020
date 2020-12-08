@@ -315,75 +315,220 @@ const fs = require('fs');
 
 // ====================================
 
-function reduceToObj(obj, [k, v]) {
-  obj[k] = v;
-  return obj;
-}
+// function reduceToObj(obj, [k, v]) {
+//   obj[k] = v;
+//   return obj;
+// }
 
-function getRules() {
-  return fs.readFileSync('inputs/13')
-    .toString()
-    .trim()
-    .split('\r\n')
-    .map((ln) => {
-      let [hd, tl] = ln.trim().slice(0, -1).split(' contain ');
-      hd = hd.slice(0, -5)
-      if (tl === 'no other bags') {
-        return [hd, {}];
-      } else {
-        const tail = tl.split(', ')
-          .map((poss) => {
-            const m = poss.match(/(\d+) (.*) bags?/)
-            return [m[2], Number.parseInt(m[1], 10)];
-          })
-          .reduce(reduceToObj, {});
-        return [hd, tail];
+// function getRules() {
+//   return fs.readFileSync('inputs/13')
+//     .toString()
+//     .trim()
+//     .split('\r\n')
+//     .map((ln) => {
+//       let [hd, tl] = ln.trim().slice(0, -1).split(' contain ');
+//       hd = hd.slice(0, -5)
+//       if (tl === 'no other bags') {
+//         return [hd, {}];
+//       } else {
+//         const tail = tl.split(', ')
+//           .map((poss) => {
+//             const m = poss.match(/(\d+) (.*) bags?/)
+//             return [m[2], Number.parseInt(m[1], 10)];
+//           })
+//           .reduce(reduceToObj, {});
+//         return [hd, tail];
+//       }
+//     })
+//     .reduce(reduceToObj, {});
+// }
+
+// // Rules map is {<bag a>: {<bag b>: <n>}}.
+// // This means bag a contains n bag b's.
+// // Reversing this map produces:
+// // {<bag b>: [<bag a>]}
+// // which means that bag b can be contained in bag a.
+// function reverseRules(rules) {
+//   return Object.entries(rules)
+//     .reduce((acc, [head, tail]) => {
+//       Object.keys(tail).forEach((key) => {
+//         if (acc.hasOwnProperty(key)) {
+//           acc[key].push(head);
+//         } else {
+//           acc[key] = [head];
+//         }
+//       });
+//       return acc;
+//     }, {});
+// }
+
+// // function main() {
+// //   const reversed = reverseRules(getRules());
+// //   let queue = reversed['shiny gold'];
+// //   const possibilities = new Set();
+// //   while (queue.length > 0) {
+// //     const curr = queue.pop();
+// //     possibilities.add(curr);
+// //     if (reversed.hasOwnProperty(curr)) {
+// //       queue = queue.concat(reversed[curr]);
+// //     }
+// //   }
+// //   console.log(possibilities.size);
+// // }
+
+// function contained(rules, bag) {
+//   return Object.entries(rules[bag])
+//     .reduce((acc, [key, value]) => acc + value * (1 + contained(rules, key)), 0);
+// }
+
+// function main() {
+//   const rules = getRules();
+//   console.log(contained(rules, 'shiny gold'));
+// }
+
+// ====================================
+
+class Interpreter {
+  constructor() {
+    this.acc = 0;
+    this.pc = 0;
+  }
+
+  step(instruction) {
+    switch (instruction[0]) {
+      case 'acc':
+        this.acc += instruction[1];
+        this.pc += 1;
+        break;
+      case 'jmp':
+        this.pc += instruction[1];
+        break;
+      case 'nop':
+        this.pc += 1;
+        break;
+    }
+  }
+
+  execute(code) {
+    while (0 <= this.pc && this.pc < code.length) {
+      const current = code[this.pc];
+      this.step(current);
+    }
+  }
+
+  interpret(instructions) {
+    const code = this.decode(instructions);
+    this.execute(code);
+  }
+
+  decode(instructions) {
+    return instructions.map((instruction) => {
+      const segments = instruction.match(/([a-z]*) ([+-])(\d*)/);
+      if (!segments) {
+        throw new Error(`??? ${instruction}`);
       }
-    })
-    .reduce(reduceToObj, {});
+      const value = Number.parseInt(segments[3], 10);
+      return [
+        segments[1],
+        (segments[2] === '+') ? value : -1 * value,
+      ];
+    });
+  }
 }
 
-// Rules map is {<bag a>: {<bag b>: <n>}}.
-// This means bag a contains n bag b's.
-// Reversing this map produces:
-// {<bag b>: [<bag a>]}
-// which means that bag b can be contained in bag a.
-function reverseRules(rules) {
-  return Object.entries(rules)
-    .reduce((acc, [head, tail]) => {
-      Object.keys(tail).forEach((key) => {
-        if (acc.hasOwnProperty(key)) {
-          acc[key].push(head);
-        } else {
-          acc[key] = [head];
-        }
-      });
-      return acc;
-    }, {});
+class Breakpoint1 extends Interpreter {
+  constructor() {
+    super();
+    this.seen = new Set([this.pc]);
+  }
+
+  step(instruction) {
+    super.step(instruction);
+    if (this.seen.has(this.pc)) {
+      this.pc = -1;
+    } else {
+      this.seen.add(this.pc);
+    }
+  }
+}
+
+class Breakpoint2 extends Breakpoint1 {
+  constructor() {
+    super();
+    this.testloc = -1;
+  }
+
+  reset() {
+    this.acc = 0;
+    this.pc = 0;
+    this.seen = new Set([this.pc]);
+  }
+
+  swap(code, loc) {
+    switch (code[loc][0]) {
+      case 'jmp':
+        code[loc][0] = 'nop';
+        break;
+      case 'nop':
+        code[loc][0] = 'jmp';
+        break;
+      default:
+        throw new Error(`Cannot swap instruction ${loc}`);
+    }
+  }
+
+  next(code) {
+    if (this.testloc < 0) {
+      this.testloc = 0;
+    } else {
+      this.swap(code, this.testloc);
+      this.testloc += 1;
+    }
+    while (this.testloc < code.length && code[this.testloc][0] === 'acc') {
+      this.testloc += 1;
+    }
+    if (this.testloc < code.length) {
+      this.swap(code, this.testloc);
+      return code;
+    } else {
+      return null;
+    }
+  }
+
+  interpret(instructions) {
+    let code = this.decode(instructions);
+    while (code) {
+      this.execute(code);
+      if (this.pc >= code.length) {
+        break;
+      } else {
+        code = this.next(code);
+        this.reset();
+      }
+    }
+  }
+
 }
 
 // function main() {
-//   const reversed = reverseRules(getRules());
-//   let queue = reversed['shiny gold'];
-//   const possibilities = new Set();
-//   while (queue.length > 0) {
-//     const curr = queue.pop();
-//     possibilities.add(curr);
-//     if (reversed.hasOwnProperty(curr)) {
-//       queue = queue.concat(reversed[curr]);
-//     }
-//   }
-//   console.log(possibilities.size);
+//   const input = fs.readFileSync('inputs/15')
+//     .toString()
+//     .trim()
+//     .split('\r\n');
+//   const interpreter = new Breakpoint1();
+//   interpreter.interpret(input);
+//   // console.log(interpreter);
+//   console.log(`${interpreter.pc}: ${interpreter.acc}`);
 // }
 
-function contained(rules, bag) {
-  return Object.entries(rules[bag])
-    .reduce((acc, [key, value]) => acc + value * (1 + contained(rules, key)), 0);
-}
-
 function main() {
-  const rules = getRules();
-  console.log(contained(rules, 'shiny gold'));
+  const input = fs.readFileSync('inputs/15')
+    .toString()
+    .trim()
+    .split('\r\n');
+  const interpreter = new Breakpoint2();
+  interpreter.interpret(input);
+  console.log(`${interpreter.pc}: ${interpreter.acc}`);
 }
 
 // ====================================
