@@ -388,147 +388,213 @@ const fs = require('fs');
 
 // ====================================
 
-class Interpreter {
-  constructor() {
-    this.acc = 0;
-    this.pc = 0;
-  }
+// class Interpreter {
+//   constructor() {
+//     this.acc = 0;
+//     this.pc = 0;
+//   }
 
-  step(instruction) {
-    switch (instruction[0]) {
-      case 'acc':
-        this.acc += instruction[1];
-        this.pc += 1;
-        break;
-      case 'jmp':
-        this.pc += instruction[1];
-        break;
-      case 'nop':
-        this.pc += 1;
-        break;
-    }
-  }
+//   step(instruction) {
+//     switch (instruction[0]) {
+//       case 'acc':
+//         this.acc += instruction[1];
+//         this.pc += 1;
+//         break;
+//       case 'jmp':
+//         this.pc += instruction[1];
+//         break;
+//       case 'nop':
+//         this.pc += 1;
+//         break;
+//     }
+//   }
 
-  execute(code) {
-    while (0 <= this.pc && this.pc < code.length) {
-      const current = code[this.pc];
-      this.step(current);
-    }
-  }
+//   execute(code) {
+//     while (0 <= this.pc && this.pc < code.length) {
+//       const current = code[this.pc];
+//       this.step(current);
+//     }
+//   }
 
-  interpret(instructions) {
-    const code = this.decode(instructions);
-    this.execute(code);
-  }
+//   interpret(instructions) {
+//     const code = this.decode(instructions);
+//     this.execute(code);
+//   }
 
-  decode(instructions) {
-    return instructions.map((instruction) => {
-      const segments = instruction.match(/([a-z]*) ([+-])(\d*)/);
-      if (!segments) {
-        throw new Error(`??? ${instruction}`);
-      }
-      const value = Number.parseInt(segments[3], 10);
-      return [
-        segments[1],
-        (segments[2] === '+') ? value : -1 * value,
-      ];
-    });
-  }
-}
+//   decode(instructions) {
+//     return instructions.map((instruction) => {
+//       const segments = instruction.match(/([a-z]*) ([+-])(\d*)/);
+//       if (!segments) {
+//         throw new Error(`??? ${instruction}`);
+//       }
+//       const value = Number.parseInt(segments[3], 10);
+//       return [
+//         segments[1],
+//         (segments[2] === '+') ? value : -1 * value,
+//       ];
+//     });
+//   }
+// }
 
-class Breakpoint1 extends Interpreter {
-  constructor() {
-    super();
-    this.seen = new Set([this.pc]);
-  }
+// class Breakpoint1 extends Interpreter {
+//   constructor() {
+//     super();
+//     this.seen = new Set([this.pc]);
+//   }
 
-  step(instruction) {
-    super.step(instruction);
-    if (this.seen.has(this.pc)) {
-      this.pc = -1;
-    } else {
-      this.seen.add(this.pc);
-    }
-  }
-}
+//   step(instruction) {
+//     super.step(instruction);
+//     if (this.seen.has(this.pc)) {
+//       this.pc = -1;
+//     } else {
+//       this.seen.add(this.pc);
+//     }
+//   }
+// }
 
-class Breakpoint2 extends Breakpoint1 {
-  constructor() {
-    super();
-    this.testloc = -1;
-  }
+// class Breakpoint2 extends Breakpoint1 {
+//   constructor() {
+//     super();
+//     this.testloc = -1;
+//   }
 
-  reset() {
-    this.acc = 0;
-    this.pc = 0;
-    this.seen = new Set([this.pc]);
-  }
+//   reset() {
+//     this.acc = 0;
+//     this.pc = 0;
+//     this.seen = new Set([this.pc]);
+//   }
 
-  swap(code, loc) {
-    switch (code[loc][0]) {
-      case 'jmp':
-        code[loc][0] = 'nop';
-        break;
-      case 'nop':
-        code[loc][0] = 'jmp';
-        break;
-      default:
-        throw new Error(`Cannot swap instruction ${loc}`);
-    }
-  }
+//   swap(code, loc) {
+//     switch (code[loc][0]) {
+//       case 'jmp':
+//         code[loc][0] = 'nop';
+//         break;
+//       case 'nop':
+//         code[loc][0] = 'jmp';
+//         break;
+//       default:
+//         throw new Error(`Cannot swap instruction ${loc}`);
+//     }
+//   }
 
-  next(code) {
-    if (this.testloc < 0) {
-      this.testloc = 0;
-    } else {
-      this.swap(code, this.testloc);
-      this.testloc += 1;
-    }
-    while (this.testloc < code.length && code[this.testloc][0] === 'acc') {
-      this.testloc += 1;
-    }
-    if (this.testloc < code.length) {
-      this.swap(code, this.testloc);
-      return code;
-    } else {
-      return null;
-    }
-  }
+//   next(code) {
+//     if (this.testloc < 0) {
+//       this.testloc = 0;
+//     } else {
+//       this.swap(code, this.testloc);
+//       this.testloc += 1;
+//     }
+//     while (this.testloc < code.length && code[this.testloc][0] === 'acc') {
+//       this.testloc += 1;
+//     }
+//     if (this.testloc < code.length) {
+//       this.swap(code, this.testloc);
+//       return code;
+//     } else {
+//       return null;
+//     }
+//   }
 
-  interpret(instructions) {
-    let code = this.decode(instructions);
-    while (code) {
-      this.execute(code);
-      if (this.pc >= code.length) {
-        break;
-      } else {
-        code = this.next(code);
-        this.reset();
-      }
-    }
-  }
+//   interpret(instructions) {
+//     let code = this.decode(instructions);
+//     while (code) {
+//       this.execute(code);
+//       if (this.pc >= code.length) {
+//         break;
+//       } else {
+//         code = this.next(code);
+//         this.reset();
+//       }
+//     }
+//   }
 
-}
+// }
+
+// // function main() {
+// //   const input = fs.readFileSync('inputs/15')
+// //     .toString()
+// //     .trim()
+// //     .split('\r\n');
+// //   const interpreter = new Breakpoint1();
+// //   interpreter.interpret(input);
+// //   // console.log(interpreter);
+// //   console.log(`${interpreter.pc}: ${interpreter.acc}`);
+// // }
 
 // function main() {
 //   const input = fs.readFileSync('inputs/15')
 //     .toString()
 //     .trim()
 //     .split('\r\n');
-//   const interpreter = new Breakpoint1();
+//   const interpreter = new Breakpoint2();
 //   interpreter.interpret(input);
-//   // console.log(interpreter);
 //   console.log(`${interpreter.pc}: ${interpreter.acc}`);
 // }
 
+// ====================================
+
+const LENGTH = 25;
+
+function isValid(input, curr) {
+  let i = curr - LENGTH;
+  let j = i + 1;
+  while (i < curr && input[i] + input[j] !== input[curr]) {
+    j += 1;
+    if (j >= curr) {
+      i += 1;
+      j = i + 1;
+    }
+  }
+  return i !== curr;
+}
+
+// function main() {
+//   const input = fs.readFileSync('inputs/17')
+//     .toString()
+//     .trim()
+//     .split('\r\n')
+//     .map((ln) => Number.parseInt(ln, 10));
+//   let curr = 25;
+//   while (curr < input.length && isValid(input, curr)) {
+//     curr += 1;
+//   }
+//   console.log(`${curr}: ${input[curr]}`);
+// }
+
+function contiguousSequence(input, total, start) {
+  let i = start;
+  let sum = 0;
+  while (sum < total) {
+    sum += input[i]
+    i += 1;
+  }
+  if (sum === total) {
+    return [start, i]
+  } else {
+    return null;
+  }
+}
+
 function main() {
-  const input = fs.readFileSync('inputs/15')
+  const input = fs.readFileSync('inputs/17')
     .toString()
     .trim()
-    .split('\r\n');
-  const interpreter = new Breakpoint2();
-  interpreter.interpret(input);
-  console.log(`${interpreter.pc}: ${interpreter.acc}`);
+    .split('\r\n')
+    .map((ln) => Number.parseInt(ln, 10));
+  let curr = 25;
+  while (curr < input.length && isValid(input, curr)) {
+    curr += 1;
+  }
+  const invalid = input[curr];
+  curr = 0;
+  let result = contiguousSequence(input, invalid, curr);
+  while (curr < input.length && !result) {
+    curr += 1;
+    result = contiguousSequence(input, invalid, curr);
+  }
+  const subsequence = input.slice(result[0], result[1]);
+  subsequence.sort();
+  console.log(subsequence[0] + subsequence[subsequence.length - 1]);
 }
 
 // ====================================
