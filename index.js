@@ -2,6 +2,8 @@
 
 const { count } = require('console');
 const fs = require('fs');
+const { normalize } = require('path');
+const { nextTick } = require('process');
 
 // ====================================
 
@@ -533,20 +535,47 @@ const fs = require('fs');
 
 // ====================================
 
-const LENGTH = 25;
+// const LENGTH = 25;
 
-function isValid(input, curr) {
-  let i = curr - LENGTH;
-  let j = i + 1;
-  while (i < curr && input[i] + input[j] !== input[curr]) {
-    j += 1;
-    if (j >= curr) {
-      i += 1;
-      j = i + 1;
-    }
-  }
-  return i !== curr;
-}
+// function isValid(input, curr) {
+//   let i = curr - LENGTH;
+//   let j = i + 1;
+//   while (i < curr && input[i] + input[j] !== input[curr]) {
+//     j += 1;
+//     if (j >= curr) {
+//       i += 1;
+//       j = i + 1;
+//     }
+//   }
+//   return i !== curr;
+// }
+
+// // function main() {
+// //   const input = fs.readFileSync('inputs/17')
+// //     .toString()
+// //     .trim()
+// //     .split('\r\n')
+// //     .map((ln) => Number.parseInt(ln, 10));
+// //   let curr = 25;
+// //   while (curr < input.length && isValid(input, curr)) {
+// //     curr += 1;
+// //   }
+// //   console.log(`${curr}: ${input[curr]}`);
+// // }
+
+// function contiguousSequence(input, total, start) {
+//   let i = start;
+//   let sum = 0;
+//   while (sum < total) {
+//     sum += input[i]
+//     i += 1;
+//   }
+//   if (sum === total) {
+//     return [start, i]
+//   } else {
+//     return null;
+//   }
+// }
 
 // function main() {
 //   const input = fs.readFileSync('inputs/17')
@@ -558,43 +587,260 @@ function isValid(input, curr) {
 //   while (curr < input.length && isValid(input, curr)) {
 //     curr += 1;
 //   }
-//   console.log(`${curr}: ${input[curr]}`);
+//   const invalid = input[curr];
+//   curr = 0;
+//   let result = contiguousSequence(input, invalid, curr);
+//   while (curr < input.length && !result) {
+//     curr += 1;
+//     result = contiguousSequence(input, invalid, curr);
+//   }
+//   const subsequence = input.slice(result[0], result[1]);
+//   subsequence.sort();
+//   console.log(subsequence[0] + subsequence[subsequence.length - 1]);
 // }
 
-function contiguousSequence(input, total, start) {
-  let i = start;
-  let sum = 0;
-  while (sum < total) {
-    sum += input[i]
-    i += 1;
-  }
-  if (sum === total) {
-    return [start, i]
-  } else {
-    return null;
-  }
+// ====================================
+
+// function main() {
+//   const input = fs.readFileSync('inputs/19')
+//     .toString()
+//     .trim()
+//     .split('\r\n')
+//     .map((ln) => Number.parseInt(ln, 10))
+//     .sort((a, b) => a - b);
+//   input.unshift(0); // initial power source
+//   input.push(input[input.length - 1] + 3); // final device
+//   console.log(`${input}`);
+//   let one = 0;
+//   let three = 0;
+//   for (let i = 0; i < input.length - 1; ++i) {
+//     switch (input[i + 1] - input[i]) {
+//       case 0, 2:
+//         break;
+//       case 1:
+//         one += 1;
+//         break;
+//       case 3:
+//         three += 1;
+//         break;
+//       default:
+//         throw new Error(`Help: ${i} ${input[i + 1]} - ${input[i]}`);
+//     }
+//   }
+//   console.log(`${one} ${three} ${one * three}`);
+// }
+
+// // Idea: break the input into segments where input[j] === input[i] + 3 (there's
+// // only one way to get between the two). Then count for each segment and
+// // multiply.
+// function countSegment(input, start, end) {
+//   let count = 0;
+//   const queue = [start];
+//   while (queue.length > 0) {
+//     const cur = queue.pop();
+//     if (cur >= end) {
+//       count += 1;
+//     } else {
+//       const value = input[cur];
+//       for (let i = cur + 1; i < cur + 4; ++i) {
+//         if (input[i] - value < 4) {
+//           queue.push(i);
+//         }
+//       }
+//     }
+//   }
+//   return count;
+// }
+
+// function segments(input) {
+//   const res = [];
+//   let start = 0;
+
+//   while (start <= input.length - 1) {
+//     let end = start + 1;
+//     while (input[end] - input[end - 1] < 3) {
+//       end += 1;
+//     }
+//     res.push([start, end - 1]);
+//     start = end;
+//   }
+
+//   return res;
+// }
+
+// function main() {
+//   const input = fs.readFileSync('inputs/19')
+//     .toString()
+//     .trim()
+//     .split('\r\n')
+//     .map((ln) => Number.parseInt(ln, 10))
+//     .sort((a, b) => a - b);
+//   input.unshift(0); // initial power source
+//   input.push(input[input.length - 1] + 3); // final device
+
+//   const opts = segments(input)
+//     .map(([start, end]) => countSegment(input, start, end))
+//     .reduce((acc, val) => acc * val, 1);
+//   console.log(opts);
+// }
+
+// ====================================
+
+// function nOccupied(state, row, col) {
+//   const rows = state.length;
+//   const cols = state[0].length;
+//   let count = 0;
+//   for (let r = row - 1; r <= row + 1; r++) {
+//     if (r < 0 || r >= rows) {
+//       continue;
+//     }
+//     for (let c = col - 1; c <= col + 1; c++) {
+//       if (c < 0 || c >= cols || (r === row && c === col)) {
+//         continue;
+//       } else if (state[r][c] === '#') {
+//         count += 1;
+//       }
+//     }
+//   }
+//   return count;
+// }
+
+// function step(state) {
+//   const newState = Array.from(state, ln => Array.from(ln));
+//   for (let r = 0; r < state.length; r++) {
+//     for (let c = 0; c < state[0].length; c++) {
+//       switch (state[r][c]) {
+//         case 'L':
+//           if (nOccupied(state, r, c) === 0) {
+//             newState[r][c] = '#';
+//           }
+//           break;
+//         case '#':
+//           if (nOccupied(state, r, c) > 3) {
+//             newState[r][c] = 'L';
+//           }
+//           break;
+//         case '.':
+//           break;
+//         default:
+//           throw new Error(`Unknown: ${state[r][c]} ${r} ${c}`);
+//           break;
+//       }
+//     }
+//   }
+//   return newState;
+// }
+
+function within(state, row, col) {
+  return 0 <= row && row < state.length && 0 <= col && col < state[0].length;
 }
 
+function nVisible(state, row, col) {
+  const directions = [[0, 1], [1, 1], [1, 0], [0, -1], [-1, -1], [-1, 0], [1, -1], [-1, 1]];
+  let count = 0;
+  for (let direction of directions) {
+    const [dr, dc] = direction;
+    let r = row;
+    let c = col;
+    while (true) {
+      r += dr;
+      c += dc;
+      if (!within(state, r, c) || state[r][c] === 'L') {
+        break;
+      } else if (state[r][c] === '#') {
+        count += 1;
+        break;
+      }
+    }
+  }
+  return count;
+}
+
+function step(state) {
+  const newState = Array.from(state, ln => Array.from(ln));
+  for (let r = 0; r < state.length; r++) {
+    for (let c = 0; c < state[0].length; c++) {
+      switch (state[r][c]) {
+        case 'L':
+          if (nVisible(state, r, c) === 0) {
+            newState[r][c] = '#';
+          }
+          break;
+        case '#':
+          if (nVisible(state, r, c) > 4) {
+            newState[r][c] = 'L';
+          }
+          break;
+        case '.':
+          break;
+        default:
+          throw new Error(`Unknown: ${state[r][c]} ${r} ${c}`);
+          break;
+      }
+    }
+  }
+  return newState;
+}
+
+function stabilized(oldState, newState) {
+  for (let r = 0; r < oldState.length; r++) {
+    for (let c = 0; c < oldState[0].length; c++) {
+      if (oldState[r][c] !== newState[r][c]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function totalOccupied(state) {
+  return state.reduce(
+    (outer, row) =>
+      outer + row.reduce(
+        (inner, col) => inner + (col === '#' ? 1 : 0),
+        0
+      ),
+    0
+  );
+}
+
+// function main() {
+//   const input = fs.readFileSync('inputs/21')
+//     .toString()
+//     .trim()
+//     .split('\r\n')
+//     .map((ln) => ln.split(''));
+//   let oldState = input;
+//   let newState = step(input);
+//   let steps = 1;
+//   // console.log(newState);
+//   while (!stabilized(oldState,newState)) {
+//     oldState = newState;
+//     newState = step(newState);
+//     steps += 1;
+//   }
+//   console.log(steps);
+//   console.log(newState);
+//   console.log(totalOccupied(newState));
+// }
+
 function main() {
-  const input = fs.readFileSync('inputs/17')
+  const input = fs.readFileSync('inputs/21')
     .toString()
     .trim()
     .split('\r\n')
-    .map((ln) => Number.parseInt(ln, 10));
-  let curr = 25;
-  while (curr < input.length && isValid(input, curr)) {
-    curr += 1;
+    .map((ln) => ln.split(''));
+  let oldState = input;
+  let newState = step(input);
+  let steps = 1;
+  while (!stabilized(oldState, newState)) {
+    oldState = newState;
+    newState = step(newState);
+    steps += 1;
   }
-  const invalid = input[curr];
-  curr = 0;
-  let result = contiguousSequence(input, invalid, curr);
-  while (curr < input.length && !result) {
-    curr += 1;
-    result = contiguousSequence(input, invalid, curr);
-  }
-  const subsequence = input.slice(result[0], result[1]);
-  subsequence.sort();
-  console.log(subsequence[0] + subsequence[subsequence.length - 1]);
+  console.log(steps);
+  // console.log(newState);
+  console.log(totalOccupied(newState));
 }
 
 // ====================================
