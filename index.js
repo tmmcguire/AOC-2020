@@ -845,48 +845,130 @@ const { nextTick } = require('process');
 
 // ====================================
 
-// // State: {
-// // loc: [<N coord>, <E coord>],
-// // dir: <direction>,
+// // // State: {
+// // // loc: [<N coord>, <E coord>],
+// // // dir: <direction>,
+// // // }
+
+// // // Clockwise rotation
+// // const direction = {
+// //   0: [0, 1],  // East
+// //   1: [-1, 0], // South
+// //   2: [0, -1], // West
+// //   3: [1, 0],  // North
+// // };
+
+// // function state0() {
+// //   return {
+// //     loc: [0, 0],
+// //     dir: 0,
+// //   }
 // // }
 
-// // Clockwise rotation
-// const direction = {
-//   0: [0, 1],  // East
-//   1: [-1, 0], // South
-//   2: [0, -1], // West
-//   3: [1, 0],  // North
-// };
+// // function update(state, [action, value]) {
+// //   switch (action) {
+// //     case 'N':
+// //       state.loc = [state.loc[0] + value, state.loc[1]];
+// //       return state;
+// //     case 'S':
+// //       state.loc = [state.loc[0] - value, state.loc[1]];
+// //       return state;
+// //     case 'E':
+// //       state.loc = [state.loc[0], state.loc[1] + value];
+// //       return state;
+// //     case 'W':
+// //       state.loc = [state.loc[0], state.loc[1] - value];
+// //       return state;
+// //     case 'L':
+// //       state.dir = (state.dir + 4 - (value / 90)) % 4;
+// //       return state;
+// //     case 'R':
+// //       state.dir = (state.dir + 4 + (value / 90)) % 4;
+// //       return state;
+// //     case 'F':
+// //       const [Nd, Ed] = direction[state.dir].map((d) => d * value);
+// //       state.loc = [state.loc[0] + Nd, state.loc[1] + Ed];
+// //       return state;
+// //     default:
+// //       throw new Error(`update: ${action}?`);
+// //   }
+// // }
+
+// // function main() {
+// //   const input = fs.readFileSync('inputs/day12')
+// //     .toString()
+// //     .trim()
+// //     .split('\r\n')
+// //     .map((ln) => {
+// //       const match = ln.match(/(\w)(\d+)/);
+// //       if (match) {
+// //         return [match[1], Number.parseInt(match[2], 10)];
+// //       } else {
+// //         throw new Error(`${ln}?`);
+// //       }
+// //     })
+// //   const end = input.reduce(update, state0());
+// //   const distance = Math.abs(end.loc[0]) + Math.abs(end.loc[1]);
+// //   console.log(end);
+// //   console.log(distance);
+// // }
+
+// // State: {
+// //  loc: [<N coord>, <E coord>],
+// //  way: [<N coord>, <E coord>],
+// // }
 
 // function state0() {
 //   return {
 //     loc: [0, 0],
-//     dir: 0,
+//     way: [1, 10],
 //   }
+// }
+
+// function rotateL([n, e]) {
+//   return [e, -1 * n];
+// }
+
+// function rotateR([n, e]) {
+//   return [-1 * e, n];
 // }
 
 // function update(state, [action, value]) {
 //   switch (action) {
 //     case 'N':
-//       state.loc = [state.loc[0] + value, state.loc[1]];
+//       state.way = [state.way[0] + value, state.way[1]];
 //       return state;
 //     case 'S':
-//       state.loc = [state.loc[0] - value, state.loc[1]];
+//       state.way = [state.way[0] - value, state.way[1]];
 //       return state;
 //     case 'E':
-//       state.loc = [state.loc[0], state.loc[1] + value];
+//       state.way = [state.way[0], state.way[1] + value];
 //       return state;
 //     case 'W':
-//       state.loc = [state.loc[0], state.loc[1] - value];
+//       state.way = [state.way[0], state.way[1] - value];
 //       return state;
 //     case 'L':
-//       state.dir = (state.dir + 4 - (value / 90)) % 4;
+//       switch (value) {
+//         case 270:
+//           state.way = rotateL(state.way);
+//         case 180:
+//           state.way = rotateL(state.way);
+//         case 90:
+//           state.way = rotateL(state.way);
+//       }
 //       return state;
 //     case 'R':
-//       state.dir = (state.dir + 4 + (value / 90)) % 4;
+//       switch (value) {
+//         case 270:
+//           state.way = rotateR(state.way);
+//         case 180:
+//           state.way = rotateR(state.way);
+//         case 90:
+//           state.way = rotateR(state.way);
+//       }
 //       return state;
 //     case 'F':
-//       const [Nd, Ed] = direction[state.dir].map((d) => d * value);
+//       const [Nd, Ed] = state.way.map((d) => d * value);
 //       state.loc = [state.loc[0] + Nd, state.loc[1] + Ed];
 //       return state;
 //     default:
@@ -913,86 +995,61 @@ const { nextTick } = require('process');
 //   console.log(distance);
 // }
 
-// State: {
-//  loc: [<N coord>, <E coord>],
-//  way: [<N coord>, <E coord>],
+// ====================================
+
+// function main() {
+//   const input = fs.readFileSync('inputs/day13')
+//     .toString()
+//     .trim()
+//     .split('\r\n');
+//   const earliestDeparture = Number.parseInt(input[0], 10);
+//   const busses = input[1].split(',')
+//     .filter((elt) => elt !== 'x')
+//     .map((elt) => Number.parseInt(elt, 10));
+//   console.log(`${earliestDeparture} -- ${busses}`);
+//   let i = 1;
+//   let best = 0;
+//   for (; i < busses.length; ++i) {
+//     if (busses[i] - (earliestDeparture % busses[i]) < busses[best] - (earliestDeparture % busses[best])) {
+//       best = i;
+//     }
+//   }
+//   console.log(`${busses[best]} * (${busses[best]} - ${earliestDeparture % busses[best]})`);
+//   console.log(busses[best] * (busses[best] - (earliestDeparture % busses[best])));
 // }
 
-function state0() {
-  return {
-    loc: [0, 0],
-    way: [1, 10],
+// I had to cheat; the tip I found as "Chinese Remainder Theorem".
+function remainders(busses) {
+  const result = [];
+  for (let i = 0; i < busses.length; ++i) {
+    if (busses[i] >= 0) {
+      result.push([busses[i], (busses[i] - (BigInt(i) % busses[i])) % busses[i]]);
+    }
   }
-}
-
-function rotateL([n, e]) {
-  return [e, -1 * n];
-}
-
-function rotateR([n, e]) {
-  return [-1 * e, n];
-}
-
-function update(state, [action, value]) {
-  switch (action) {
-    case 'N':
-      state.way = [state.way[0] + value, state.way[1]];
-      return state;
-    case 'S':
-      state.way = [state.way[0] - value, state.way[1]];
-      return state;
-    case 'E':
-      state.way = [state.way[0], state.way[1] + value];
-      return state;
-    case 'W':
-      state.way = [state.way[0], state.way[1] - value];
-      return state;
-    case 'L':
-      switch (value) {
-        case 270:
-          state.way = rotateL(state.way);
-        case 180:
-          state.way = rotateL(state.way);
-        case 90:
-          state.way = rotateL(state.way);
-      }
-      return state;
-    case 'R':
-      switch (value) {
-        case 270:
-          state.way = rotateR(state.way);
-        case 180:
-          state.way = rotateR(state.way);
-        case 90:
-          state.way = rotateR(state.way);
-      }
-      return state;
-    case 'F':
-      const [Nd, Ed] = state.way.map((d) => d * value);
-      state.loc = [state.loc[0] + Nd, state.loc[1] + Ed];
-      return state;
-    default:
-      throw new Error(`update: ${action}?`);
-  }
+  return result;
 }
 
 function main() {
-  const input = fs.readFileSync('inputs/day12')
+  const input = fs.readFileSync('inputs/day13')
     .toString()
     .trim()
-    .split('\r\n')
-    .map((ln) => {
-      const match = ln.match(/(\w)(\d+)/);
-      if (match) {
-        return [match[1], Number.parseInt(match[2], 10)];
-      } else {
-        throw new Error(`${ln}?`);
-      }
-    })
-  const end = input.reduce(update, state0());
-  const distance = Math.abs(end.loc[0]) + Math.abs(end.loc[1]);
-  console.log(end);
-  console.log(distance);
+    .split('\r\n');
+  const busses = input[1].split(',')
+    .map((elt) => (elt !== 'x') ? BigInt(Number.parseInt(elt, 10)) : -1);
+
+  const congruences = remainders(busses)
+    .sort(([a1, a2], [b1, b2]) => a1 - b1);
+  let congruence = congruences.pop();
+  let step = congruence[0];
+  let base = congruence[1];
+  while (congruences.length > 0) {
+    congruence = congruences.pop();
+    while (base % congruence[0] !== congruence[1]) {
+      base += step;
+    }
+    step = step * congruence[0];
+  }
+  console.log(base);
 }
 
 // ====================================
