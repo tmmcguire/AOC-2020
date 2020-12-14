@@ -686,19 +686,70 @@ const { nextTick } = require('process');
 
 // ====================================
 
-// function nOccupied(state, row, col) {
-//   const rows = state.length;
-//   const cols = state[0].length;
+// // function nOccupied(state, row, col) {
+// //   const rows = state.length;
+// //   const cols = state[0].length;
+// //   let count = 0;
+// //   for (let r = row - 1; r <= row + 1; r++) {
+// //     if (r < 0 || r >= rows) {
+// //       continue;
+// //     }
+// //     for (let c = col - 1; c <= col + 1; c++) {
+// //       if (c < 0 || c >= cols || (r === row && c === col)) {
+// //         continue;
+// //       } else if (state[r][c] === '#') {
+// //         count += 1;
+// //       }
+// //     }
+// //   }
+// //   return count;
+// // }
+
+// // function step(state) {
+// //   const newState = Array.from(state, ln => Array.from(ln));
+// //   for (let r = 0; r < state.length; r++) {
+// //     for (let c = 0; c < state[0].length; c++) {
+// //       switch (state[r][c]) {
+// //         case 'L':
+// //           if (nOccupied(state, r, c) === 0) {
+// //             newState[r][c] = '#';
+// //           }
+// //           break;
+// //         case '#':
+// //           if (nOccupied(state, r, c) > 3) {
+// //             newState[r][c] = 'L';
+// //           }
+// //           break;
+// //         case '.':
+// //           break;
+// //         default:
+// //           throw new Error(`Unknown: ${state[r][c]} ${r} ${c}`);
+// //           break;
+// //       }
+// //     }
+// //   }
+// //   return newState;
+// // }
+
+// function within(state, row, col) {
+//   return 0 <= row && row < state.length && 0 <= col && col < state[0].length;
+// }
+
+// function nVisible(state, row, col) {
+//   const directions = [[0, 1], [1, 1], [1, 0], [0, -1], [-1, -1], [-1, 0], [1, -1], [-1, 1]];
 //   let count = 0;
-//   for (let r = row - 1; r <= row + 1; r++) {
-//     if (r < 0 || r >= rows) {
-//       continue;
-//     }
-//     for (let c = col - 1; c <= col + 1; c++) {
-//       if (c < 0 || c >= cols || (r === row && c === col)) {
-//         continue;
+//   for (let direction of directions) {
+//     const [dr, dc] = direction;
+//     let r = row;
+//     let c = col;
+//     while (true) {
+//       r += dr;
+//       c += dc;
+//       if (!within(state, r, c) || state[r][c] === 'L') {
+//         break;
 //       } else if (state[r][c] === '#') {
 //         count += 1;
+//         break;
 //       }
 //     }
 //   }
@@ -711,12 +762,12 @@ const { nextTick } = require('process');
 //     for (let c = 0; c < state[0].length; c++) {
 //       switch (state[r][c]) {
 //         case 'L':
-//           if (nOccupied(state, r, c) === 0) {
+//           if (nVisible(state, r, c) === 0) {
 //             newState[r][c] = '#';
 //           }
 //           break;
 //         case '#':
-//           if (nOccupied(state, r, c) > 3) {
+//           if (nVisible(state, r, c) > 4) {
 //             newState[r][c] = 'L';
 //           }
 //           break;
@@ -731,78 +782,47 @@ const { nextTick } = require('process');
 //   return newState;
 // }
 
-function within(state, row, col) {
-  return 0 <= row && row < state.length && 0 <= col && col < state[0].length;
-}
+// function stabilized(oldState, newState) {
+//   for (let r = 0; r < oldState.length; r++) {
+//     for (let c = 0; c < oldState[0].length; c++) {
+//       if (oldState[r][c] !== newState[r][c]) {
+//         return false;
+//       }
+//     }
+//   }
+//   return true;
+// }
 
-function nVisible(state, row, col) {
-  const directions = [[0, 1], [1, 1], [1, 0], [0, -1], [-1, -1], [-1, 0], [1, -1], [-1, 1]];
-  let count = 0;
-  for (let direction of directions) {
-    const [dr, dc] = direction;
-    let r = row;
-    let c = col;
-    while (true) {
-      r += dr;
-      c += dc;
-      if (!within(state, r, c) || state[r][c] === 'L') {
-        break;
-      } else if (state[r][c] === '#') {
-        count += 1;
-        break;
-      }
-    }
-  }
-  return count;
-}
+// function totalOccupied(state) {
+//   return state.reduce(
+//     (outer, row) =>
+//       outer + row.reduce(
+//         (inner, col) => inner + (col === '#' ? 1 : 0),
+//         0
+//       ),
+//     0
+//   );
+// }
 
-function step(state) {
-  const newState = Array.from(state, ln => Array.from(ln));
-  for (let r = 0; r < state.length; r++) {
-    for (let c = 0; c < state[0].length; c++) {
-      switch (state[r][c]) {
-        case 'L':
-          if (nVisible(state, r, c) === 0) {
-            newState[r][c] = '#';
-          }
-          break;
-        case '#':
-          if (nVisible(state, r, c) > 4) {
-            newState[r][c] = 'L';
-          }
-          break;
-        case '.':
-          break;
-        default:
-          throw new Error(`Unknown: ${state[r][c]} ${r} ${c}`);
-          break;
-      }
-    }
-  }
-  return newState;
-}
-
-function stabilized(oldState, newState) {
-  for (let r = 0; r < oldState.length; r++) {
-    for (let c = 0; c < oldState[0].length; c++) {
-      if (oldState[r][c] !== newState[r][c]) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-function totalOccupied(state) {
-  return state.reduce(
-    (outer, row) =>
-      outer + row.reduce(
-        (inner, col) => inner + (col === '#' ? 1 : 0),
-        0
-      ),
-    0
-  );
-}
+// // function main() {
+// //   const input = fs.readFileSync('inputs/21')
+// //     .toString()
+// //     .trim()
+// //     .split('\r\n')
+// //     .map((ln) => ln.split(''));
+// //   let oldState = input;
+// //   let newState = step(input);
+// //   let steps = 1;
+// //   // console.log(newState);
+// //   while (!stabilized(oldState,newState)) {
+// //     oldState = newState;
+// //     newState = step(newState);
+// //     steps += 1;
+// //   }
+// //   console.log(steps);
+// //   console.log(newState);
+// //   console.log(totalOccupied(newState));
+// // }
 
 // function main() {
 //   const input = fs.readFileSync('inputs/21')
@@ -813,34 +833,166 @@ function totalOccupied(state) {
 //   let oldState = input;
 //   let newState = step(input);
 //   let steps = 1;
-//   // console.log(newState);
-//   while (!stabilized(oldState,newState)) {
+//   while (!stabilized(oldState, newState)) {
 //     oldState = newState;
 //     newState = step(newState);
 //     steps += 1;
 //   }
 //   console.log(steps);
-//   console.log(newState);
+//   // console.log(newState);
 //   console.log(totalOccupied(newState));
 // }
 
+// ====================================
+
+// // State: {
+// // loc: [<N coord>, <E coord>],
+// // dir: <direction>,
+// // }
+
+// // Clockwise rotation
+// const direction = {
+//   0: [0, 1],  // East
+//   1: [-1, 0], // South
+//   2: [0, -1], // West
+//   3: [1, 0],  // North
+// };
+
+// function state0() {
+//   return {
+//     loc: [0, 0],
+//     dir: 0,
+//   }
+// }
+
+// function update(state, [action, value]) {
+//   switch (action) {
+//     case 'N':
+//       state.loc = [state.loc[0] + value, state.loc[1]];
+//       return state;
+//     case 'S':
+//       state.loc = [state.loc[0] - value, state.loc[1]];
+//       return state;
+//     case 'E':
+//       state.loc = [state.loc[0], state.loc[1] + value];
+//       return state;
+//     case 'W':
+//       state.loc = [state.loc[0], state.loc[1] - value];
+//       return state;
+//     case 'L':
+//       state.dir = (state.dir + 4 - (value / 90)) % 4;
+//       return state;
+//     case 'R':
+//       state.dir = (state.dir + 4 + (value / 90)) % 4;
+//       return state;
+//     case 'F':
+//       const [Nd, Ed] = direction[state.dir].map((d) => d * value);
+//       state.loc = [state.loc[0] + Nd, state.loc[1] + Ed];
+//       return state;
+//     default:
+//       throw new Error(`update: ${action}?`);
+//   }
+// }
+
+// function main() {
+//   const input = fs.readFileSync('inputs/day12')
+//     .toString()
+//     .trim()
+//     .split('\r\n')
+//     .map((ln) => {
+//       const match = ln.match(/(\w)(\d+)/);
+//       if (match) {
+//         return [match[1], Number.parseInt(match[2], 10)];
+//       } else {
+//         throw new Error(`${ln}?`);
+//       }
+//     })
+//   const end = input.reduce(update, state0());
+//   const distance = Math.abs(end.loc[0]) + Math.abs(end.loc[1]);
+//   console.log(end);
+//   console.log(distance);
+// }
+
+// State: {
+//  loc: [<N coord>, <E coord>],
+//  way: [<N coord>, <E coord>],
+// }
+
+function state0() {
+  return {
+    loc: [0, 0],
+    way: [1, 10],
+  }
+}
+
+function rotateL([n, e]) {
+  return [e, -1 * n];
+}
+
+function rotateR([n, e]) {
+  return [-1 * e, n];
+}
+
+function update(state, [action, value]) {
+  switch (action) {
+    case 'N':
+      state.way = [state.way[0] + value, state.way[1]];
+      return state;
+    case 'S':
+      state.way = [state.way[0] - value, state.way[1]];
+      return state;
+    case 'E':
+      state.way = [state.way[0], state.way[1] + value];
+      return state;
+    case 'W':
+      state.way = [state.way[0], state.way[1] - value];
+      return state;
+    case 'L':
+      switch (value) {
+        case 270:
+          state.way = rotateL(state.way);
+        case 180:
+          state.way = rotateL(state.way);
+        case 90:
+          state.way = rotateL(state.way);
+      }
+      return state;
+    case 'R':
+      switch (value) {
+        case 270:
+          state.way = rotateR(state.way);
+        case 180:
+          state.way = rotateR(state.way);
+        case 90:
+          state.way = rotateR(state.way);
+      }
+      return state;
+    case 'F':
+      const [Nd, Ed] = state.way.map((d) => d * value);
+      state.loc = [state.loc[0] + Nd, state.loc[1] + Ed];
+      return state;
+    default:
+      throw new Error(`update: ${action}?`);
+  }
+}
+
 function main() {
-  const input = fs.readFileSync('inputs/21')
+  const input = fs.readFileSync('inputs/day12')
     .toString()
     .trim()
     .split('\r\n')
-    .map((ln) => ln.split(''));
-  let oldState = input;
-  let newState = step(input);
-  let steps = 1;
-  while (!stabilized(oldState, newState)) {
-    oldState = newState;
-    newState = step(newState);
-    steps += 1;
-  }
-  console.log(steps);
-  // console.log(newState);
-  console.log(totalOccupied(newState));
+    .map((ln) => {
+      const match = ln.match(/(\w)(\d+)/);
+      if (match) {
+        return [match[1], Number.parseInt(match[2], 10)];
+      } else {
+        throw new Error(`${ln}?`);
+      }
+    })
+  const end = input.reduce(update, state0());
+  const distance = Math.abs(end.loc[0]) + Math.abs(end.loc[1]);
+  console.log(end);
+  console.log(distance);
 }
 
 // ====================================
