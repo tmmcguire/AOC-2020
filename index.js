@@ -1054,35 +1054,119 @@ const { nextTick, domain } = require('process');
 
 // ====================================
 
+// // function toMask(str) {
+// //   let ones = BigInt(0);
+// //   let zeros = BigInt(0);
+// //   for (let i = 0; i < 36; ++i) {
+// //     switch (str[i]) {
+// //       case 'X':
+// //         ones = ones * 2n;
+// //         zeros = zeros * 2n + 1n;
+// //         break;
+// //       case '1':
+// //         ones = ones * 2n + 1n;
+// //         zeros = zeros * 2n + 1n;
+// //         break;
+// //       case '0':
+// //         ones = ones * 2n;
+// //         zeros = zeros * 2n;
+// //         break;
+// //       default:
+// //         throw new Error(str);
+// //     }
+// //   }
+// //   return [ones, zeros];
+// // }
+
+// // function toOp(ln) {
+// //   let match = ln.match(/mask = ([X01]{36})/);
+// //   if (match) {
+// //     const [ones, zeros] = toMask(match[1]);
+// //     return ['mask', ones, zeros];
+// //   }
+// //   match = ln.match(/mem\[(\d+)\] = (\d+)/);
+// //   if (match) {
+// //     return [
+// //       'assign',
+// //       BigInt(match[1]),
+// //       BigInt(match[2]),
+// //     ];
+// //   }
+// // }
+
+// // function main() {
+// //   const input = fs.readFileSync('inputs/day14')
+// //     .toString()
+// //     .trim()
+// //     .split('\r\n')
+// //     .map(toOp);
+// //   console.log(input);
+// //   const memory = input.reduce((state, op) => {
+// //     switch (op[0]) {
+// //       case 'mask':
+// //         state.mask = [op[1], op[2]];
+// //         break;
+// //       case 'assign':
+// //         const loc = op[1];
+// //         let val = op[2];
+// //         val = val | state.mask[0];
+// //         val = val & state.mask[1];
+// //         state.mem[loc] = val;
+// //         break;
+// //     }
+// //     return state;
+// //   }, {
+// //     mask: [],
+// //     mem: {},
+// //   });
+// //   console.log(memory);
+// //   const sum = Object.values(memory.mem).reduce((acc, cur) => acc + cur, 0n);
+// //   console.log(sum);
+// // }
+
 // function toMask(str) {
 //   let ones = BigInt(0);
-//   let zeros = BigInt(0);
+//   let bitvalue = 36n;
+//   let floating = [];
 //   for (let i = 0; i < 36; ++i) {
+//     bitvalue -= 1n;
 //     switch (str[i]) {
 //       case 'X':
 //         ones = ones * 2n;
-//         zeros = zeros * 2n + 1n;
+//         floating.push(2n ** bitvalue);
 //         break;
 //       case '1':
 //         ones = ones * 2n + 1n;
-//         zeros = zeros * 2n + 1n;
 //         break;
 //       case '0':
 //         ones = ones * 2n;
-//         zeros = zeros * 2n;
 //         break;
 //       default:
 //         throw new Error(str);
 //     }
 //   }
-//   return [ones, zeros];
+//   return [ones, floating];
+// }
+
+// function doFloating(masks, value) {
+//   let addresses = [value];
+//   for (let mask of masks) {
+//     // addresses.flatMap((cur) => {
+//     //   addresses = [(cur | m), (cur & ~m)];
+//     // })
+//     addresses = addresses.reduce(
+//       (acc, cur) => acc.concat([(cur | mask), (cur & ~mask)]),
+//       []
+//     );
+//   }
+//   return addresses;
 // }
 
 // function toOp(ln) {
 //   let match = ln.match(/mask = ([X01]{36})/);
 //   if (match) {
-//     const [ones, zeros] = toMask(match[1]);
-//     return ['mask', ones, zeros];
+//     const [ones, floating] = toMask(match[1]);
+//     return ['mask', ones, floating];
 //   }
 //   match = ln.match(/mem\[(\d+)\] = (\d+)/);
 //   if (match) {
@@ -1100,18 +1184,14 @@ const { nextTick, domain } = require('process');
 //     .trim()
 //     .split('\r\n')
 //     .map(toOp);
-//   console.log(input);
 //   const memory = input.reduce((state, op) => {
 //     switch (op[0]) {
 //       case 'mask':
 //         state.mask = [op[1], op[2]];
 //         break;
 //       case 'assign':
-//         const loc = op[1];
-//         let val = op[2];
-//         val = val | state.mask[0];
-//         val = val & state.mask[1];
-//         state.mem[loc] = val;
+//         doFloating(state.mask[1], op[1] | state.mask[0])
+//           .forEach((v) => state.mem[v] = op[2]);
 //         break;
 //     }
 //     return state;
@@ -1119,89 +1199,70 @@ const { nextTick, domain } = require('process');
 //     mask: [],
 //     mem: {},
 //   });
-//   console.log(memory);
-//   const sum = Object.values(memory.mem).reduce((acc, cur) => acc + cur, 0n);
+//   const sum = Object.values(memory.mem)
+//     .reduce((acc, cur) => acc + cur, 0n);
 //   console.log(sum);
 // }
 
-function toMask(str) {
-  let ones = BigInt(0);
-  let bitvalue = 36n;
-  let floating = [];
-  for (let i = 0; i < 36; ++i) {
-    bitvalue -= 1n;
-    switch (str[i]) {
-      case 'X':
-        ones = ones * 2n;
-        floating.push(2n ** bitvalue);
-        break;
-      case '1':
-        ones = ones * 2n + 1n;
-        break;
-      case '0':
-        ones = ones * 2n;
-        break;
-      default:
-        throw new Error(str);
-    }
+// ====================================
+
+const INPUT = [5, 1, 9, 18, 13, 8, 0];
+const INPUTa = [0, 3, 6];
+const INPUTb = [1, 3, 2];
+const INPUTc = [2, 1, 3];
+const INPUTd = [3, 1, 2];
+
+const TURNS = 30000000;
+
+// const numbers = {};
+const numbers = Array(TURNS);
+
+function distance(number) {
+  const turns = numbers[number];
+  if (turns === undefined) {
+    return 0;
+  } else {
+    return turns[0] - turns[1];
   }
-  return [ones, floating];
 }
 
-function doFloating(masks, value) {
-  let addresses = [value];
-  for (let mask of masks) {
-    // addresses.flatMap((cur) => {
-    //   addresses = [(cur | m), (cur & ~m)];
-    // })
-    addresses = addresses.reduce(
-      (acc, cur) => acc.concat([(cur | mask), (cur & ~mask)]),
-      []
-    );
+function say(turn, number) {
+  const turns = numbers[number];
+  if (turns === undefined) {
+    numbers[number] = [turn, turn];
+  } else {
+    numbers[number] = [turn, turns[0]];
   }
-  return addresses;
 }
 
-function toOp(ln) {
-  let match = ln.match(/mask = ([X01]{36})/);
-  if (match) {
-    const [ones, floating] = toMask(match[1]);
-    return ['mask', ones, floating];
-  }
-  match = ln.match(/mem\[(\d+)\] = (\d+)/);
-  if (match) {
-    return [
-      'assign',
-      BigInt(match[1]),
-      BigInt(match[2]),
-    ];
-  }
-}
+// function main() {
+//   const input = INPUT;
+//   for (let t = 1; t <= input.length; t++) {
+//     say(t, input[t-1]);
+//   }
+//   let last = input[input.length - 1];
+//   for (let t = input.length + 1; t <= 2020; t++) {
+//     const dist = distance(last);
+//     // console.log(`${t} ${dist}`);
+//     say(t, dist);
+//     last = dist;
+//   }
+//   console.log(last);
+// }
 
 function main() {
-  const input = fs.readFileSync('inputs/day14')
-    .toString()
-    .trim()
-    .split('\r\n')
-    .map(toOp);
-  const memory = input.reduce((state, op) => {
-    switch (op[0]) {
-      case 'mask':
-        state.mask = [op[1], op[2]];
-        break;
-      case 'assign':
-        doFloating(state.mask[1], op[1] | state.mask[0])
-          .forEach((v) => state.mem[v] = op[2]);
-        break;
-    }
-    return state;
-  }, {
-    mask: [],
-    mem: {},
-  });
-  const sum = Object.values(memory.mem)
-    .reduce((acc, cur) => acc + cur, 0n);
-  console.log(sum);
+  const input = INPUT;
+  for (let t = 1; t <= input.length; t++) {
+    say(t, input[t - 1]);
+  }
+  let last = input[input.length - 1];
+  for (let t = input.length + 1; t <= TURNS; t++) {
+    const dist = distance(last);
+    // console.log(`${t} ${dist}`);
+    say(t, dist);
+    last = dist;
+  }
+  console.log(last);
 }
 
 // ====================================
