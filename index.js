@@ -3,7 +3,7 @@
 const { count } = require('console');
 const fs = require('fs');
 const { normalize } = require('path');
-const { nextTick } = require('process');
+const { nextTick, domain } = require('process');
 
 // ====================================
 
@@ -997,59 +997,211 @@ const { nextTick } = require('process');
 
 // ====================================
 
+// // function main() {
+// //   const input = fs.readFileSync('inputs/day13')
+// //     .toString()
+// //     .trim()
+// //     .split('\r\n');
+// //   const earliestDeparture = Number.parseInt(input[0], 10);
+// //   const busses = input[1].split(',')
+// //     .filter((elt) => elt !== 'x')
+// //     .map((elt) => Number.parseInt(elt, 10));
+// //   console.log(`${earliestDeparture} -- ${busses}`);
+// //   let i = 1;
+// //   let best = 0;
+// //   for (; i < busses.length; ++i) {
+// //     if (busses[i] - (earliestDeparture % busses[i]) < busses[best] - (earliestDeparture % busses[best])) {
+// //       best = i;
+// //     }
+// //   }
+// //   console.log(`${busses[best]} * (${busses[best]} - ${earliestDeparture % busses[best]})`);
+// //   console.log(busses[best] * (busses[best] - (earliestDeparture % busses[best])));
+// // }
+
+// // I had to cheat; the tip I found as "Chinese Remainder Theorem".
+// function remainders(busses) {
+//   const result = [];
+//   for (let i = 0; i < busses.length; ++i) {
+//     if (busses[i] >= 0) {
+//       result.push([busses[i], (busses[i] - (BigInt(i) % busses[i])) % busses[i]]);
+//     }
+//   }
+//   return result;
+// }
+
 // function main() {
 //   const input = fs.readFileSync('inputs/day13')
 //     .toString()
 //     .trim()
 //     .split('\r\n');
-//   const earliestDeparture = Number.parseInt(input[0], 10);
 //   const busses = input[1].split(',')
-//     .filter((elt) => elt !== 'x')
-//     .map((elt) => Number.parseInt(elt, 10));
-//   console.log(`${earliestDeparture} -- ${busses}`);
-//   let i = 1;
-//   let best = 0;
-//   for (; i < busses.length; ++i) {
-//     if (busses[i] - (earliestDeparture % busses[i]) < busses[best] - (earliestDeparture % busses[best])) {
-//       best = i;
+//     .map((elt) => (elt !== 'x') ? BigInt(Number.parseInt(elt, 10)) : -1);
+
+//   const congruences = remainders(busses)
+//     .sort(([a1, a2], [b1, b2]) => a1 - b1);
+//   let congruence = congruences.pop();
+//   let step = congruence[0];
+//   let base = congruence[1];
+//   while (congruences.length > 0) {
+//     congruence = congruences.pop();
+//     while (base % congruence[0] !== congruence[1]) {
+//       base += step;
 //     }
+//     step = step * congruence[0];
 //   }
-//   console.log(`${busses[best]} * (${busses[best]} - ${earliestDeparture % busses[best]})`);
-//   console.log(busses[best] * (busses[best] - (earliestDeparture % busses[best])));
+//   console.log(base);
 // }
 
-// I had to cheat; the tip I found as "Chinese Remainder Theorem".
-function remainders(busses) {
-  const result = [];
-  for (let i = 0; i < busses.length; ++i) {
-    if (busses[i] >= 0) {
-      result.push([busses[i], (busses[i] - (BigInt(i) % busses[i])) % busses[i]]);
+// ====================================
+
+// function toMask(str) {
+//   let ones = BigInt(0);
+//   let zeros = BigInt(0);
+//   for (let i = 0; i < 36; ++i) {
+//     switch (str[i]) {
+//       case 'X':
+//         ones = ones * 2n;
+//         zeros = zeros * 2n + 1n;
+//         break;
+//       case '1':
+//         ones = ones * 2n + 1n;
+//         zeros = zeros * 2n + 1n;
+//         break;
+//       case '0':
+//         ones = ones * 2n;
+//         zeros = zeros * 2n;
+//         break;
+//       default:
+//         throw new Error(str);
+//     }
+//   }
+//   return [ones, zeros];
+// }
+
+// function toOp(ln) {
+//   let match = ln.match(/mask = ([X01]{36})/);
+//   if (match) {
+//     const [ones, zeros] = toMask(match[1]);
+//     return ['mask', ones, zeros];
+//   }
+//   match = ln.match(/mem\[(\d+)\] = (\d+)/);
+//   if (match) {
+//     return [
+//       'assign',
+//       BigInt(match[1]),
+//       BigInt(match[2]),
+//     ];
+//   }
+// }
+
+// function main() {
+//   const input = fs.readFileSync('inputs/day14')
+//     .toString()
+//     .trim()
+//     .split('\r\n')
+//     .map(toOp);
+//   console.log(input);
+//   const memory = input.reduce((state, op) => {
+//     switch (op[0]) {
+//       case 'mask':
+//         state.mask = [op[1], op[2]];
+//         break;
+//       case 'assign':
+//         const loc = op[1];
+//         let val = op[2];
+//         val = val | state.mask[0];
+//         val = val & state.mask[1];
+//         state.mem[loc] = val;
+//         break;
+//     }
+//     return state;
+//   }, {
+//     mask: [],
+//     mem: {},
+//   });
+//   console.log(memory);
+//   const sum = Object.values(memory.mem).reduce((acc, cur) => acc + cur, 0n);
+//   console.log(sum);
+// }
+
+function toMask(str) {
+  let ones = BigInt(0);
+  let bitvalue = 36n;
+  let floating = [];
+  for (let i = 0; i < 36; ++i) {
+    bitvalue -= 1n;
+    switch (str[i]) {
+      case 'X':
+        ones = ones * 2n;
+        floating.push(2n ** bitvalue);
+        break;
+      case '1':
+        ones = ones * 2n + 1n;
+        break;
+      case '0':
+        ones = ones * 2n;
+        break;
+      default:
+        throw new Error(str);
     }
   }
-  return result;
+  return [ones, floating];
+}
+
+function doFloating(masks, value) {
+  let addresses = [value];
+  for (let mask of masks) {
+    // addresses.flatMap((cur) => {
+    //   addresses = [(cur | m), (cur & ~m)];
+    // })
+    addresses = addresses.reduce(
+      (acc, cur) => acc.concat([(cur | mask), (cur & ~mask)]),
+      []
+    );
+  }
+  return addresses;
+}
+
+function toOp(ln) {
+  let match = ln.match(/mask = ([X01]{36})/);
+  if (match) {
+    const [ones, floating] = toMask(match[1]);
+    return ['mask', ones, floating];
+  }
+  match = ln.match(/mem\[(\d+)\] = (\d+)/);
+  if (match) {
+    return [
+      'assign',
+      BigInt(match[1]),
+      BigInt(match[2]),
+    ];
+  }
 }
 
 function main() {
-  const input = fs.readFileSync('inputs/day13')
+  const input = fs.readFileSync('inputs/day14')
     .toString()
     .trim()
-    .split('\r\n');
-  const busses = input[1].split(',')
-    .map((elt) => (elt !== 'x') ? BigInt(Number.parseInt(elt, 10)) : -1);
-
-  const congruences = remainders(busses)
-    .sort(([a1, a2], [b1, b2]) => a1 - b1);
-  let congruence = congruences.pop();
-  let step = congruence[0];
-  let base = congruence[1];
-  while (congruences.length > 0) {
-    congruence = congruences.pop();
-    while (base % congruence[0] !== congruence[1]) {
-      base += step;
+    .split('\r\n')
+    .map(toOp);
+  const memory = input.reduce((state, op) => {
+    switch (op[0]) {
+      case 'mask':
+        state.mask = [op[1], op[2]];
+        break;
+      case 'assign':
+        doFloating(state.mask[1], op[1] | state.mask[0])
+          .forEach((v) => state.mem[v] = op[2]);
+        break;
     }
-    step = step * congruence[0];
-  }
-  console.log(base);
+    return state;
+  }, {
+    mask: [],
+    mem: {},
+  });
+  const sum = Object.values(memory.mem)
+    .reduce((acc, cur) => acc + cur, 0n);
+  console.log(sum);
 }
 
 // ====================================
