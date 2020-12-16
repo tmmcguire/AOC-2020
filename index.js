@@ -4,6 +4,7 @@ const { count } = require('console');
 const fs = require('fs');
 const { normalize } = require('path');
 const { nextTick, domain } = require('process');
+const { isNumber } = require('util');
 
 // ====================================
 
@@ -1206,42 +1207,57 @@ const { nextTick, domain } = require('process');
 
 // ====================================
 
-const INPUT = [5, 1, 9, 18, 13, 8, 0];
-const INPUTa = [0, 3, 6];
-const INPUTb = [1, 3, 2];
-const INPUTc = [2, 1, 3];
-const INPUTd = [3, 1, 2];
+// const INPUT = [5, 1, 9, 18, 13, 8, 0];
+// const INPUTa = [0, 3, 6];
+// const INPUTb = [1, 3, 2];
+// const INPUTc = [2, 1, 3];
+// const INPUTd = [3, 1, 2];
 
-const TURNS = 30000000;
+// const TURNS = 30000000;
 
-// const numbers = {};
-const numbers = Array(TURNS);
+// // const numbers = {};
+// const numbers = Array(TURNS);
 
-function distance(number) {
-  const turns = numbers[number];
-  if (turns === undefined) {
-    return 0;
-  } else {
-    return turns[0] - turns[1];
-  }
-}
+// function distance(number) {
+//   const turns = numbers[number];
+//   if (turns === undefined) {
+//     return 0;
+//   } else {
+//     return turns[0] - turns[1];
+//   }
+// }
 
-function say(turn, number) {
-  const turns = numbers[number];
-  if (turns === undefined) {
-    numbers[number] = [turn, turn];
-  } else {
-    numbers[number] = [turn, turns[0]];
-  }
-}
+// function say(turn, number) {
+//   const turns = numbers[number];
+//   if (turns === undefined) {
+//     numbers[number] = [turn, turn];
+//   } else {
+//     numbers[number] = [turn, turns[0]];
+//   }
+// }
+
+// // function main() {
+// //   const input = INPUT;
+// //   for (let t = 1; t <= input.length; t++) {
+// //     say(t, input[t-1]);
+// //   }
+// //   let last = input[input.length - 1];
+// //   for (let t = input.length + 1; t <= 2020; t++) {
+// //     const dist = distance(last);
+// //     // console.log(`${t} ${dist}`);
+// //     say(t, dist);
+// //     last = dist;
+// //   }
+// //   console.log(last);
+// // }
 
 // function main() {
 //   const input = INPUT;
 //   for (let t = 1; t <= input.length; t++) {
-//     say(t, input[t-1]);
+//     say(t, input[t - 1]);
 //   }
 //   let last = input[input.length - 1];
-//   for (let t = input.length + 1; t <= 2020; t++) {
+//   for (let t = input.length + 1; t <= TURNS; t++) {
 //     const dist = distance(last);
 //     // console.log(`${t} ${dist}`);
 //     say(t, dist);
@@ -1250,19 +1266,143 @@ function say(turn, number) {
 //   console.log(last);
 // }
 
+// ====================================
+
+function buildRules(rules) {
+  const ruleMap = rules.split('\r\n')
+    .map((rule) => {
+      const [head, tail] = rule.split(':').map((s) => s.trim());
+      return [
+        head,
+        tail.split(' or ').map((rng) => rng.split('-').map((n) => Number.parseInt(n, 10))),
+      ];
+    })
+    .reduce((m, rule) => {
+      m[rule[0]] = rule[1];
+      return m;
+    }, {});
+  return ruleMap;
+}
+
+function buildTicket(line) {
+  const ticket = line.split(',').map((n) => Number.parseInt(n, 10));
+  return ticket;
+}
+
+// function mergeTestRes(results) {
+//   return results.reduce(
+//     (current, next) => current.reduce(
+//       (cur, test, i) => {
+//         if (cur[i] !== test) {
+//           cur[i] = null;
+//         }
+//         return cur;
+//       },
+//       next
+//     )
+//   );
+// }
+
+// function testRule(ruleTail, ticket) {
+//   const result = mergeTestRes(
+//     ruleTail.map(
+//       ([low, hi]) => ticket.map(
+//         (val) => (low <= val && val <= hi) ? null : val
+//       )
+//     )
+//   );
+//   return result;
+// }
+
+// function validTicket(rules, ticket) {
+//   const result = mergeTestRes(
+//     Object.values(rules).map((rule) => testRule(rule, ticket))
+//   );
+//   return result;
+// }
+
+// function sum(ary) {
+//   return ary
+//     .filter((elt) => typeof elt === 'number')
+//     .reduce((acc, n) => acc + n, 0);
+// }
+
+// function main() {
+//   const input = fs.readFileSync('inputs/day16')
+//     .toString()
+//     .trim()
+//     .split('\r\n\r\n');
+//   const rules = buildRules(input[0]);
+//   const myTicket = buildTicket(input[1].split('\r\n')[1]);
+//   const nearby = input[2].split('\r\n').slice(1).map(buildTicket);
+//   // console.log(JSON.stringify(rules, null, 2));
+//   // console.log(JSON.stringify(myTicket, null, 2));
+//   // console.log(JSON.stringify(nearby, null, 2));
+//   const x = nearby.map((tkt) => validTicket(rules, tkt)).map(sum);
+//   console.log(sum(x));
+// }
+
+function testRule(ruleTail, value) {
+  return ruleTail.some(([low, hi]) => low <= value && value <= hi);
+}
+
+function validTicket(rules, ticket) {
+  return ticket.every(
+    (value) => Object.values(rules).some(
+      (ruleTail) => testRule(ruleTail, value)
+    )
+  );
+}
+
+function assignFields(rules, tickets) {
+  let assignment = [];
+  for (let i = 0; i < tickets[0].length; ++i) {
+    assignment[i] = new Set(
+      Object.entries(rules)
+        .filter(
+          ([_, ruleTail]) => tickets
+            .map((tkt) => tkt[i])
+            .every((val) => testRule(ruleTail, val))
+        )
+        .map(([key, _]) => key)
+    );
+  }
+  assignment = Array.from(assignment.entries())
+    .sort((a, b) => a[1].size - b[1].size)
+  const mapping = {};
+  for (let i = 0; i < assignment.length; ++i) {
+    if (assignment[i][1].size > 1) {
+      throw new Error(`${i}`);
+    } else {
+      const key = Array.from(assignment[i][1].values())[0];
+      mapping[key] = assignment[i][0];
+      for (let j = i + 1; j < assignment.length; ++j) {
+        assignment[j][1].delete(key);
+      }
+    }
+  }
+  return mapping;
+}
+
 function main() {
-  const input = INPUT;
-  for (let t = 1; t <= input.length; t++) {
-    say(t, input[t - 1]);
-  }
-  let last = input[input.length - 1];
-  for (let t = input.length + 1; t <= TURNS; t++) {
-    const dist = distance(last);
-    // console.log(`${t} ${dist}`);
-    say(t, dist);
-    last = dist;
-  }
-  console.log(last);
+  const input = fs.readFileSync('inputs/day16')
+    .toString()
+    .trim()
+    .split('\r\n\r\n');
+  const rules = buildRules(input[0]);
+  const myTicket = buildTicket(input[1].split('\r\n')[1]);
+  const nearby = input[2]
+    .split('\r\n')
+    .slice(1)
+    .map(buildTicket)
+    .filter((tkt) => validTicket(rules, tkt));
+  const assignment = assignFields(rules, nearby);
+  console.log(assignment);
+  const result = Object.entries(assignment)
+    .filter(([key, _]) => key.startsWith('departure'))
+    .map(([_, idx]) => BigInt(myTicket[idx]))
+    .reduce((acc, cur) => acc * cur, 1n);
+  console.log(result);
 }
 
 // ====================================
