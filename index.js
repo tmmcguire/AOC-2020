@@ -1268,63 +1268,120 @@ const { isNumber } = require('util');
 
 // ====================================
 
-function buildRules(rules) {
-  const ruleMap = rules.split('\r\n')
-    .map((rule) => {
-      const [head, tail] = rule.split(':').map((s) => s.trim());
-      return [
-        head,
-        tail.split(' or ').map((rng) => rng.split('-').map((n) => Number.parseInt(n, 10))),
-      ];
-    })
-    .reduce((m, rule) => {
-      m[rule[0]] = rule[1];
-      return m;
-    }, {});
-  return ruleMap;
-}
-
-function buildTicket(line) {
-  const ticket = line.split(',').map((n) => Number.parseInt(n, 10));
-  return ticket;
-}
-
-// function mergeTestRes(results) {
-//   return results.reduce(
-//     (current, next) => current.reduce(
-//       (cur, test, i) => {
-//         if (cur[i] !== test) {
-//           cur[i] = null;
-//         }
-//         return cur;
-//       },
-//       next
-//     )
-//   );
+// function buildRules(rules) {
+//   const ruleMap = rules.split('\r\n')
+//     .map((rule) => {
+//       const [head, tail] = rule.split(':').map((s) => s.trim());
+//       return [
+//         head,
+//         tail.split(' or ').map((rng) => rng.split('-').map((n) => Number.parseInt(n, 10))),
+//       ];
+//     })
+//     .reduce((m, rule) => {
+//       m[rule[0]] = rule[1];
+//       return m;
+//     }, {});
+//   return ruleMap;
 // }
 
-// function testRule(ruleTail, ticket) {
-//   const result = mergeTestRes(
-//     ruleTail.map(
-//       ([low, hi]) => ticket.map(
-//         (val) => (low <= val && val <= hi) ? null : val
-//       )
-//     )
-//   );
-//   return result;
+// function buildTicket(line) {
+//   const ticket = line.split(',').map((n) => Number.parseInt(n, 10));
+//   return ticket;
+// }
+
+// // function mergeTestRes(results) {
+// //   return results.reduce(
+// //     (current, next) => current.reduce(
+// //       (cur, test, i) => {
+// //         if (cur[i] !== test) {
+// //           cur[i] = null;
+// //         }
+// //         return cur;
+// //       },
+// //       next
+// //     )
+// //   );
+// // }
+
+// // function testRule(ruleTail, ticket) {
+// //   const result = mergeTestRes(
+// //     ruleTail.map(
+// //       ([low, hi]) => ticket.map(
+// //         (val) => (low <= val && val <= hi) ? null : val
+// //       )
+// //     )
+// //   );
+// //   return result;
+// // }
+
+// // function validTicket(rules, ticket) {
+// //   const result = mergeTestRes(
+// //     Object.values(rules).map((rule) => testRule(rule, ticket))
+// //   );
+// //   return result;
+// // }
+
+// // function sum(ary) {
+// //   return ary
+// //     .filter((elt) => typeof elt === 'number')
+// //     .reduce((acc, n) => acc + n, 0);
+// // }
+
+// // function main() {
+// //   const input = fs.readFileSync('inputs/day16')
+// //     .toString()
+// //     .trim()
+// //     .split('\r\n\r\n');
+// //   const rules = buildRules(input[0]);
+// //   const myTicket = buildTicket(input[1].split('\r\n')[1]);
+// //   const nearby = input[2].split('\r\n').slice(1).map(buildTicket);
+// //   // console.log(JSON.stringify(rules, null, 2));
+// //   // console.log(JSON.stringify(myTicket, null, 2));
+// //   // console.log(JSON.stringify(nearby, null, 2));
+// //   const x = nearby.map((tkt) => validTicket(rules, tkt)).map(sum);
+// //   console.log(sum(x));
+// // }
+
+// function testRule(ruleTail, value) {
+//   return ruleTail.some(([low, hi]) => low <= value && value <= hi);
 // }
 
 // function validTicket(rules, ticket) {
-//   const result = mergeTestRes(
-//     Object.values(rules).map((rule) => testRule(rule, ticket))
+//   return ticket.every(
+//     (value) => Object.values(rules).some(
+//       (ruleTail) => testRule(ruleTail, value)
+//     )
 //   );
-//   return result;
 // }
 
-// function sum(ary) {
-//   return ary
-//     .filter((elt) => typeof elt === 'number')
-//     .reduce((acc, n) => acc + n, 0);
+// function assignFields(rules, tickets) {
+//   let assignment = [];
+//   for (let i = 0; i < tickets[0].length; ++i) {
+//     assignment[i] = new Set(
+//       Object.entries(rules)
+//         .filter(
+//           ([_, ruleTail]) => tickets
+//             .map((tkt) => tkt[i])
+//             .every((val) => testRule(ruleTail, val))
+//         )
+//         .map(([key, _]) => key)
+//     );
+//   }
+//   assignment = Array.from(assignment.entries())
+//     .sort((a, b) => a[1].size - b[1].size)
+//   const mapping = {};
+//   for (let i = 0; i < assignment.length; ++i) {
+//     if (assignment[i][1].size > 1) {
+//       throw new Error(`${i}`);
+//     } else {
+//       const key = Array.from(assignment[i][1].values())[0];
+//       mapping[key] = assignment[i][0];
+//       for (let j = i + 1; j < assignment.length; ++j) {
+//         assignment[j][1].delete(key);
+//       }
+//     }
+//   }
+//   return mapping;
 // }
 
 // function main() {
@@ -1334,75 +1391,253 @@ function buildTicket(line) {
 //     .split('\r\n\r\n');
 //   const rules = buildRules(input[0]);
 //   const myTicket = buildTicket(input[1].split('\r\n')[1]);
-//   const nearby = input[2].split('\r\n').slice(1).map(buildTicket);
-//   // console.log(JSON.stringify(rules, null, 2));
-//   // console.log(JSON.stringify(myTicket, null, 2));
-//   // console.log(JSON.stringify(nearby, null, 2));
-//   const x = nearby.map((tkt) => validTicket(rules, tkt)).map(sum);
-//   console.log(sum(x));
+//   const nearby = input[2]
+//     .split('\r\n')
+//     .slice(1)
+//     .map(buildTicket)
+//     .filter((tkt) => validTicket(rules, tkt));
+//   const assignment = assignFields(rules, nearby);
+//   console.log(assignment);
+//   const result = Object.entries(assignment)
+//     .filter(([key, _]) => key.startsWith('departure'))
+//     .map(([_, idx]) => BigInt(myTicket[idx]))
+//     .reduce((acc, cur) => acc * cur, 1n);
+//   console.log(result);
 // }
 
-function testRule(ruleTail, value) {
-  return ruleTail.some(([low, hi]) => low <= value && value <= hi);
-}
+// ====================================
 
-function validTicket(rules, ticket) {
-  return ticket.every(
-    (value) => Object.values(rules).some(
-      (ruleTail) => testRule(ruleTail, value)
-    )
-  );
-}
+// class State {
+//   constructor(cells) {
+//     this.cells = cells;
+//   }
 
-function assignFields(rules, tickets) {
-  let assignment = [];
-  for (let i = 0; i < tickets[0].length; ++i) {
-    assignment[i] = new Set(
-      Object.entries(rules)
-        .filter(
-          ([_, ruleTail]) => tickets
-            .map((tkt) => tkt[i])
-            .every((val) => testRule(ruleTail, val))
-        )
-        .map(([key, _]) => key)
-    );
+//   static from2D(input) {
+//     const state = new State();
+//     state.cells = [input];
+//     return state;
+//   }
+
+//   cellAt(layer, row, col) {
+//     if (layer < 0 || this.cells.length <= layer) {
+//       return '.';
+//     } else if (row < 0 || this.cells[0].length <= row) {
+//       return '.';
+//     } else if (col < 0 || this.cells[0][0].length <= col) {
+//       return '.';
+//     } else {
+//       return this.cells[layer][row][col];
+//     }
+//   }
+
+//   neighbors(layer, row, col) {
+//     let count = 0;
+//     for (let l1 = layer - 1; l1 <= layer + 1; ++l1) {
+//       for (let r1 = row - 1; r1 <= row + 1; ++r1) {
+//         for (let c1 = col - 1; c1 <= col + 1; ++c1) {
+//           if ((layer !== l1 || row !== r1 || col !== c1) && this.cellAt(l1, r1, c1) === '#') {
+//             count += 1;
+//           }
+//         }
+//       }
+//     }
+//     return count;
+//   }
+
+//   active() {
+//     let count = 0;
+//     for (let layer = 0; layer < this.cells.length; ++layer) {
+//       for (let row = 0; row < this.cells[0].length; ++row) {
+//         for (let col = 0; col < this.cells[0][0].length; ++col) {
+//           if (this.cellAt(layer, row, col) === '#') {
+//             count += 1;
+//           }
+//         }
+//       }
+//     }
+//     return count;
+//   }
+
+//   cellStep(layer, row, col) {
+//     const n = this.neighbors(layer, row, col);
+//     switch (this.cellAt(layer, row, col)) {
+//       case '#':
+//         if (n === 2 || n === 3) {
+//           return '#';
+//         } else {
+//           return '.';
+//         }
+//       case '.':
+//         if (n === 3) {
+//           return '#';
+//         } else {
+//           return '.';
+//         }
+//     }
+//   }
+
+//   nextState() {
+//     const nlayers = this.cells.length + 1;
+//     const nrows = this.cells[0].length + 1;
+//     const ncols = this.cells[0].length + 1;
+//     const newCells = Array(nlayers);
+//     for (let layer = -1; layer < nlayers; ++layer) {
+//       const curLayer = Array(nrows);
+//       for (let row = -1; row < nrows; ++row) {
+//         const curRow = Array(ncols);
+//         for (let col = -1; col < ncols; ++col) {
+//           // curRow[col + 1] = this.cellAt(layer, row, col);
+//           // curRow[col + 1] = this.neighbors(layer, row, col);
+//           curRow[col + 1] = this.cellStep(layer, row, col);
+//         }
+//         curLayer[row + 1] = curRow;
+//       }
+//       newCells[layer + 1] = curLayer;
+//     }
+//     return new State(newCells);
+//   }
+
+//   printState() {
+//     for (let layer = 0; layer < this.cells.length; ++layer) {
+//       console.log(`Layer ${layer}`);
+//       for (let row = 0; row < this.cells[0].length; ++row) {
+//         console.log(this.cells[layer][row].join(''));
+//       }
+//     }
+//   }
+// }
+
+class State {
+  constructor(cells) {
+    this.cells = cells;
   }
-  assignment = Array.from(assignment.entries())
-    .sort((a, b) => a[1].size - b[1].size)
-  const mapping = {};
-  for (let i = 0; i < assignment.length; ++i) {
-    if (assignment[i][1].size > 1) {
-      throw new Error(`${i}`);
+
+  static from2D(input) {
+    const state = new State();
+    state.cells = [[input]];
+    return state;
+  }
+
+  cellAt(layer, row, col, hyper) {
+    if (layer < 0 || this.cells.length <= layer) {
+      return '.';
+    } else if (row < 0 || this.cells[0].length <= row) {
+      return '.';
+    } else if (col < 0 || this.cells[0][0].length <= col) {
+      return '.';
+    } else if (hyper < 0 || this.cells[0][0][0].length <= hyper) {
+      return '.';
     } else {
-      const key = Array.from(assignment[i][1].values())[0];
-      mapping[key] = assignment[i][0];
-      for (let j = i + 1; j < assignment.length; ++j) {
-        assignment[j][1].delete(key);
+      return this.cells[layer][row][col][hyper];
+    }
+  }
+
+  neighbors(layer, row, col, hyper) {
+    let count = 0;
+    for (let l1 = layer - 1; l1 <= layer + 1; ++l1) {
+      for (let r1 = row - 1; r1 <= row + 1; ++r1) {
+        for (let c1 = col - 1; c1 <= col + 1; ++c1) {
+          for (let h1 = hyper - 1; h1 <= hyper + 1; ++h1) {
+            if ((layer !== l1 || row !== r1 || col !== c1 || hyper !== h1)
+              && this.cellAt(l1, r1, c1, h1) === '#') {
+              count += 1;
+            }
+          }
+        }
+      }
+    }
+    return count;
+  }
+
+  active() {
+    let count = 0;
+    for (let layer = 0; layer < this.cells.length; ++layer) {
+      for (let row = 0; row < this.cells[0].length; ++row) {
+        for (let col = 0; col < this.cells[0][0].length; ++col) {
+          for (let hyper = 0; hyper < this.cells[0][0][0].length; ++hyper) {
+            if (this.cellAt(layer, row, col, hyper) === '#') {
+              count += 1;
+            }
+          }
+        }
+      }
+    }
+    return count;
+  }
+
+  cellStep(layer, row, col, hyper) {
+    const n = this.neighbors(layer, row, col, hyper);
+    switch (this.cellAt(layer, row, col, hyper)) {
+      case '#':
+        if (n === 2 || n === 3) {
+          return '#';
+        } else {
+          return '.';
+        }
+      case '.':
+        if (n === 3) {
+          return '#';
+        } else {
+          return '.';
+        }
+    }
+  }
+
+  nextState() {
+    const nlayers = this.cells.length + 1;
+    const nrows = this.cells[0].length + 1;
+    const ncols = this.cells[0][0].length + 1;
+    const nhyper = this.cells[0][0][0].length + 1;
+    // console.log(`nS ${nlayers} ${nrows} ${ncols} ${nhyper}`);
+    const newCells = Array(nlayers);
+    for (let layer = -1; layer < nlayers; ++layer) {
+      const curLayer = Array(nrows);
+      for (let row = -1; row < nrows; ++row) {
+        const curRow = Array(ncols);
+        for (let col = -1; col < ncols; ++col) {
+          const curCol = Array(nhyper);
+          for (let hyper = -1; hyper < nhyper; ++hyper) {
+            // curCol[hyper + 1] = '.';
+            // curCol[hyper + 1] = this.cellAt(layer, row, col, hyper);
+            // curCol[hyper + 1] = this.neighbors(layer, row, col, hyper);
+            curCol[hyper + 1] = this.cellStep(layer, row, col, hyper);
+          }
+          curRow[col + 1] = curCol;
+        }
+        curLayer[row + 1] = curRow;
+      }
+      newCells[layer + 1] = curLayer;
+    }
+    return new State(newCells);
+  }
+
+  printState() {
+    for (let layer = 0; layer < this.cells.length; ++layer) {
+      for (let row = 0; row < this.cells[0].length; ++row) {
+        console.log(`Layer ${layer} ${row}`);
+        for (let col = 0; col < this.cells[0][0].length; ++col) {
+          // console.log(this.cells[layer][row][col])
+          console.log(this.cells[layer][row][col].join(''));
+        }
       }
     }
   }
-  return mapping;
 }
 
 function main() {
-  const input = fs.readFileSync('inputs/day16')
+  const input = fs.readFileSync('inputs/day17')
     .toString()
     .trim()
-    .split('\r\n\r\n');
-  const rules = buildRules(input[0]);
-  const myTicket = buildTicket(input[1].split('\r\n')[1]);
-  const nearby = input[2]
     .split('\r\n')
-    .slice(1)
-    .map(buildTicket)
-    .filter((tkt) => validTicket(rules, tkt));
-  const assignment = assignFields(rules, nearby);
-  console.log(assignment);
-  const result = Object.entries(assignment)
-    .filter(([key, _]) => key.startsWith('departure'))
-    .map(([_, idx]) => BigInt(myTicket[idx]))
-    .reduce((acc, cur) => acc * cur, 1n);
-  console.log(result);
+    .map((ln) => ln.split(''));
+  let state = State.from2D(input);
+  for (let cycle = 0; cycle < 6; ++cycle) {
+    // state.printState();
+    // console.log(state.active());
+    state = state.nextState();
+  }
+  state.printState();
+  console.log(state.active());
 }
 
 // ====================================
