@@ -2,6 +2,7 @@
 
 const { count } = require('console');
 const fs = require('fs');
+const { type } = require('os');
 const { normalize } = require('path');
 const { nextTick, domain } = require('process');
 const { isNumber } = require('util');
@@ -1407,6 +1408,106 @@ const { isNumber } = require('util');
 
 // ====================================
 
+// // class State {
+// //   constructor(cells) {
+// //     this.cells = cells;
+// //   }
+
+// //   static from2D(input) {
+// //     const state = new State();
+// //     state.cells = [input];
+// //     return state;
+// //   }
+
+// //   cellAt(layer, row, col) {
+// //     if (layer < 0 || this.cells.length <= layer) {
+// //       return '.';
+// //     } else if (row < 0 || this.cells[0].length <= row) {
+// //       return '.';
+// //     } else if (col < 0 || this.cells[0][0].length <= col) {
+// //       return '.';
+// //     } else {
+// //       return this.cells[layer][row][col];
+// //     }
+// //   }
+
+// //   neighbors(layer, row, col) {
+// //     let count = 0;
+// //     for (let l1 = layer - 1; l1 <= layer + 1; ++l1) {
+// //       for (let r1 = row - 1; r1 <= row + 1; ++r1) {
+// //         for (let c1 = col - 1; c1 <= col + 1; ++c1) {
+// //           if ((layer !== l1 || row !== r1 || col !== c1) && this.cellAt(l1, r1, c1) === '#') {
+// //             count += 1;
+// //           }
+// //         }
+// //       }
+// //     }
+// //     return count;
+// //   }
+
+// //   active() {
+// //     let count = 0;
+// //     for (let layer = 0; layer < this.cells.length; ++layer) {
+// //       for (let row = 0; row < this.cells[0].length; ++row) {
+// //         for (let col = 0; col < this.cells[0][0].length; ++col) {
+// //           if (this.cellAt(layer, row, col) === '#') {
+// //             count += 1;
+// //           }
+// //         }
+// //       }
+// //     }
+// //     return count;
+// //   }
+
+// //   cellStep(layer, row, col) {
+// //     const n = this.neighbors(layer, row, col);
+// //     switch (this.cellAt(layer, row, col)) {
+// //       case '#':
+// //         if (n === 2 || n === 3) {
+// //           return '#';
+// //         } else {
+// //           return '.';
+// //         }
+// //       case '.':
+// //         if (n === 3) {
+// //           return '#';
+// //         } else {
+// //           return '.';
+// //         }
+// //     }
+// //   }
+
+// //   nextState() {
+// //     const nlayers = this.cells.length + 1;
+// //     const nrows = this.cells[0].length + 1;
+// //     const ncols = this.cells[0].length + 1;
+// //     const newCells = Array(nlayers);
+// //     for (let layer = -1; layer < nlayers; ++layer) {
+// //       const curLayer = Array(nrows);
+// //       for (let row = -1; row < nrows; ++row) {
+// //         const curRow = Array(ncols);
+// //         for (let col = -1; col < ncols; ++col) {
+// //           // curRow[col + 1] = this.cellAt(layer, row, col);
+// //           // curRow[col + 1] = this.neighbors(layer, row, col);
+// //           curRow[col + 1] = this.cellStep(layer, row, col);
+// //         }
+// //         curLayer[row + 1] = curRow;
+// //       }
+// //       newCells[layer + 1] = curLayer;
+// //     }
+// //     return new State(newCells);
+// //   }
+
+// //   printState() {
+// //     for (let layer = 0; layer < this.cells.length; ++layer) {
+// //       console.log(`Layer ${layer}`);
+// //       for (let row = 0; row < this.cells[0].length; ++row) {
+// //         console.log(this.cells[layer][row].join(''));
+// //       }
+// //     }
+// //   }
+// // }
+
 // class State {
 //   constructor(cells) {
 //     this.cells = cells;
@@ -1414,29 +1515,34 @@ const { isNumber } = require('util');
 
 //   static from2D(input) {
 //     const state = new State();
-//     state.cells = [input];
+//     state.cells = [[input]];
 //     return state;
 //   }
 
-//   cellAt(layer, row, col) {
+//   cellAt(layer, row, col, hyper) {
 //     if (layer < 0 || this.cells.length <= layer) {
 //       return '.';
 //     } else if (row < 0 || this.cells[0].length <= row) {
 //       return '.';
 //     } else if (col < 0 || this.cells[0][0].length <= col) {
 //       return '.';
+//     } else if (hyper < 0 || this.cells[0][0][0].length <= hyper) {
+//       return '.';
 //     } else {
-//       return this.cells[layer][row][col];
+//       return this.cells[layer][row][col][hyper];
 //     }
 //   }
 
-//   neighbors(layer, row, col) {
+//   neighbors(layer, row, col, hyper) {
 //     let count = 0;
 //     for (let l1 = layer - 1; l1 <= layer + 1; ++l1) {
 //       for (let r1 = row - 1; r1 <= row + 1; ++r1) {
 //         for (let c1 = col - 1; c1 <= col + 1; ++c1) {
-//           if ((layer !== l1 || row !== r1 || col !== c1) && this.cellAt(l1, r1, c1) === '#') {
-//             count += 1;
+//           for (let h1 = hyper - 1; h1 <= hyper + 1; ++h1) {
+//             if ((layer !== l1 || row !== r1 || col !== c1 || hyper !== h1)
+//               && this.cellAt(l1, r1, c1, h1) === '#') {
+//               count += 1;
+//             }
 //           }
 //         }
 //       }
@@ -1449,8 +1555,10 @@ const { isNumber } = require('util');
 //     for (let layer = 0; layer < this.cells.length; ++layer) {
 //       for (let row = 0; row < this.cells[0].length; ++row) {
 //         for (let col = 0; col < this.cells[0][0].length; ++col) {
-//           if (this.cellAt(layer, row, col) === '#') {
-//             count += 1;
+//           for (let hyper = 0; hyper < this.cells[0][0][0].length; ++hyper) {
+//             if (this.cellAt(layer, row, col, hyper) === '#') {
+//               count += 1;
+//             }
 //           }
 //         }
 //       }
@@ -1458,9 +1566,9 @@ const { isNumber } = require('util');
 //     return count;
 //   }
 
-//   cellStep(layer, row, col) {
-//     const n = this.neighbors(layer, row, col);
-//     switch (this.cellAt(layer, row, col)) {
+//   cellStep(layer, row, col, hyper) {
+//     const n = this.neighbors(layer, row, col, hyper);
+//     switch (this.cellAt(layer, row, col, hyper)) {
 //       case '#':
 //         if (n === 2 || n === 3) {
 //           return '#';
@@ -1479,16 +1587,23 @@ const { isNumber } = require('util');
 //   nextState() {
 //     const nlayers = this.cells.length + 1;
 //     const nrows = this.cells[0].length + 1;
-//     const ncols = this.cells[0].length + 1;
+//     const ncols = this.cells[0][0].length + 1;
+//     const nhyper = this.cells[0][0][0].length + 1;
+//     // console.log(`nS ${nlayers} ${nrows} ${ncols} ${nhyper}`);
 //     const newCells = Array(nlayers);
 //     for (let layer = -1; layer < nlayers; ++layer) {
 //       const curLayer = Array(nrows);
 //       for (let row = -1; row < nrows; ++row) {
 //         const curRow = Array(ncols);
 //         for (let col = -1; col < ncols; ++col) {
-//           // curRow[col + 1] = this.cellAt(layer, row, col);
-//           // curRow[col + 1] = this.neighbors(layer, row, col);
-//           curRow[col + 1] = this.cellStep(layer, row, col);
+//           const curCol = Array(nhyper);
+//           for (let hyper = -1; hyper < nhyper; ++hyper) {
+//             // curCol[hyper + 1] = '.';
+//             // curCol[hyper + 1] = this.cellAt(layer, row, col, hyper);
+//             // curCol[hyper + 1] = this.neighbors(layer, row, col, hyper);
+//             curCol[hyper + 1] = this.cellStep(layer, row, col, hyper);
+//           }
+//           curRow[col + 1] = curCol;
 //         }
 //         curLayer[row + 1] = curRow;
 //       }
@@ -1499,145 +1614,128 @@ const { isNumber } = require('util');
 
 //   printState() {
 //     for (let layer = 0; layer < this.cells.length; ++layer) {
-//       console.log(`Layer ${layer}`);
 //       for (let row = 0; row < this.cells[0].length; ++row) {
-//         console.log(this.cells[layer][row].join(''));
+//         console.log(`Layer ${layer} ${row}`);
+//         for (let col = 0; col < this.cells[0][0].length; ++col) {
+//           // console.log(this.cells[layer][row][col])
+//           console.log(this.cells[layer][row][col].join(''));
+//         }
 //       }
 //     }
 //   }
 // }
 
-class State {
-  constructor(cells) {
-    this.cells = cells;
+// function main() {
+//   const input = fs.readFileSync('inputs/day17')
+//     .toString()
+//     .trim()
+//     .split('\r\n')
+//     .map((ln) => ln.split(''));
+//   let state = State.from2D(input);
+//   for (let cycle = 0; cycle < 6; ++cycle) {
+//     // state.printState();
+//     // console.log(state.active());
+//     state = state.nextState();
+//   }
+//   state.printState();
+//   console.log(state.active());
+// }
+
+// ====================================
+
+// function parse(str) {
+//   const match = str.match(/\d+/);
+//   if (match) {
+//     return Number.parseInt(str, 10);
+//   } else {
+//     switch (str) {
+//       case '+', '*':
+//         return str;
+//       default:
+//         return false;
+//     }
+//   }
+// }
+
+function numberP(str) {
+  return /^\d+$/.test(str);
+}
+
+class ExprStack {
+  constructor() {
+    this.stack = [];
+    this.state = 'empty';
   }
 
-  static from2D(input) {
-    const state = new State();
-    state.cells = [[input]];
-    return state;
-  }
+  // push(elt) {
+  //   if (typeof elt === 'number' && this.state === 'empty') {
+  //     this.stack.push(elt);
+  //     this.state = 'function';
+  //   } else if (typeof elt === 'function' && this.state === 'function') {
+  //     this.stack.push(elt);
+  //     this.state = 'completing'
+  //   } else if (typeof elt === 'number' && this.state === 'completing') {
+  //     const op = this.stack.pop();
+  //     const arg1 = this.stack.pop();
+  //     this.stack.push(op(arg1, elt));
+  //     this.state = 'function';
+  //   } else {
+  //     throw new Error('stack in wrong state');
+  //   }
+  // }
 
-  cellAt(layer, row, col, hyper) {
-    if (layer < 0 || this.cells.length <= layer) {
-      return '.';
-    } else if (row < 0 || this.cells[0].length <= row) {
-      return '.';
-    } else if (col < 0 || this.cells[0][0].length <= col) {
-      return '.';
-    } else if (hyper < 0 || this.cells[0][0][0].length <= hyper) {
-      return '.';
-    } else {
-      return this.cells[layer][row][col][hyper];
-    }
-  }
-
-  neighbors(layer, row, col, hyper) {
-    let count = 0;
-    for (let l1 = layer - 1; l1 <= layer + 1; ++l1) {
-      for (let r1 = row - 1; r1 <= row + 1; ++r1) {
-        for (let c1 = col - 1; c1 <= col + 1; ++c1) {
-          for (let h1 = hyper - 1; h1 <= hyper + 1; ++h1) {
-            if ((layer !== l1 || row !== r1 || col !== c1 || hyper !== h1)
-              && this.cellAt(l1, r1, c1, h1) === '#') {
-              count += 1;
-            }
-          }
-        }
+  push(elt) {
+    if (numberP(elt)) {
+      if (this.state === 'empty') {
+        this.stack.push(Number.parseInt(elt, 10));
+        this.state = 'number';
+      } else if (this.state === 'plus') {
+        const arg = this.stack.pop();
+        this.stack.push(Number.parseInt(elt, 10) + arg);
+        this.state = 'number';
+      } else if (this.state === 'times') {
+        this.stack.push(Number.parseInt(elt, 10));
+        this.state = 'number';
       }
-    }
-    return count;
-  }
-
-  active() {
-    let count = 0;
-    for (let layer = 0; layer < this.cells.length; ++layer) {
-      for (let row = 0; row < this.cells[0].length; ++row) {
-        for (let col = 0; col < this.cells[0][0].length; ++col) {
-          for (let hyper = 0; hyper < this.cells[0][0][0].length; ++hyper) {
-            if (this.cellAt(layer, row, col, hyper) === '#') {
-              count += 1;
-            }
-          }
-        }
-      }
-    }
-    return count;
-  }
-
-  cellStep(layer, row, col, hyper) {
-    const n = this.neighbors(layer, row, col, hyper);
-    switch (this.cellAt(layer, row, col, hyper)) {
-      case '#':
-        if (n === 2 || n === 3) {
-          return '#';
-        } else {
-          return '.';
-        }
-      case '.':
-        if (n === 3) {
-          return '#';
-        } else {
-          return '.';
-        }
+    } else if (elt === '+') {
+      this.state = 'plus';
+    } else if (elt === '*') {
+      this.state = 'times';
     }
   }
 
-  nextState() {
-    const nlayers = this.cells.length + 1;
-    const nrows = this.cells[0].length + 1;
-    const ncols = this.cells[0][0].length + 1;
-    const nhyper = this.cells[0][0][0].length + 1;
-    // console.log(`nS ${nlayers} ${nrows} ${ncols} ${nhyper}`);
-    const newCells = Array(nlayers);
-    for (let layer = -1; layer < nlayers; ++layer) {
-      const curLayer = Array(nrows);
-      for (let row = -1; row < nrows; ++row) {
-        const curRow = Array(ncols);
-        for (let col = -1; col < ncols; ++col) {
-          const curCol = Array(nhyper);
-          for (let hyper = -1; hyper < nhyper; ++hyper) {
-            // curCol[hyper + 1] = '.';
-            // curCol[hyper + 1] = this.cellAt(layer, row, col, hyper);
-            // curCol[hyper + 1] = this.neighbors(layer, row, col, hyper);
-            curCol[hyper + 1] = this.cellStep(layer, row, col, hyper);
-          }
-          curRow[col + 1] = curCol;
-        }
-        curLayer[row + 1] = curRow;
-      }
-      newCells[layer + 1] = curLayer;
-    }
-    return new State(newCells);
-  }
-
-  printState() {
-    for (let layer = 0; layer < this.cells.length; ++layer) {
-      for (let row = 0; row < this.cells[0].length; ++row) {
-        console.log(`Layer ${layer} ${row}`);
-        for (let col = 0; col < this.cells[0][0].length; ++col) {
-          // console.log(this.cells[layer][row][col])
-          console.log(this.cells[layer][row][col].join(''));
-        }
-      }
-    }
+  pop() {
+    let value = this.stack.reduce((acc, cur) => acc * cur, 1);
+    this.stack = [];
+    this.state = 'empty';
+    return value;
   }
 }
 
+function evaluate(input) {
+  let line = input;
+  const stack = new ExprStack;
+  while (line.length > 0) {
+    const elt = line.shift();
+    if (elt === '(') {
+      stack.push(evaluate(line));
+    } else if (elt === ')') {
+      break;
+    } else {
+      stack.push(elt);
+    }
+  }
+  return stack.pop();
+}
+
 function main() {
-  const input = fs.readFileSync('inputs/day17')
+  const input = fs.readFileSync('inputs/day18')
     .toString()
     .trim()
     .split('\r\n')
-    .map((ln) => ln.split(''));
-  let state = State.from2D(input);
-  for (let cycle = 0; cycle < 6; ++cycle) {
-    // state.printState();
-    // console.log(state.active());
-    state = state.nextState();
-  }
-  state.printState();
-  console.log(state.active());
+    .map((ln) => ln.split('').filter((elt) => elt !== ' '));
+  const result = input.map(evaluate);
+  console.log(result.reduce((acc, cur) => acc + BigInt(cur), 0n));
 }
 
 // ====================================
