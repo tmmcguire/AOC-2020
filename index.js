@@ -1741,33 +1741,44 @@ const { isNumber } = require('util');
 
 // ====================================
 
-function makeRules(lines) {
-  const terminals = [];
-  const nonterminals = [];
-  lines.forEach((ln) => {
-    const [head, body] = ln.split(': ').map((s) => s.trim());
-    if (/"\w"/.test(body)) {
-      // terminal
-      terminals.push([head, body[1]]);
-    } else {
-      // nonterminal
-      nonterminals.push([
-        head,
-        body.split(' | ').map((seq) => seq.split(' '))
-      ]);
-    }
-  });
-  return {
-    'terminals': terminals.reduce((m, [h, ch]) => {
-      m[h] = ch;
-      return m
-    }, {}),
-    'nonterminals': nonterminals.reduce((m, [h, b]) => {
-      m[h] = b;
-      return m;
-    }, {}),
-  };
-}
+// function makeRules(lines) {
+//   const terminals = [];
+//   const nonterminals = [];
+//   lines.forEach((ln) => {
+//     const [head, body] = ln.split(': ').map((s) => s.trim());
+//     if (/"\w"/.test(body)) {
+//       // terminal
+//       terminals.push([head, body[1]]);
+//     } else {
+//       // nonterminal
+//       nonterminals.push([
+//         head,
+//         body.split(' | ').map((seq) => seq.split(' '))
+//       ]);
+//     }
+//   });
+//   return {
+//     'terminals': terminals.reduce((m, [h, ch]) => {
+//       m[h] = ch;
+//       return m
+//     }, {}),
+//     'nonterminals': nonterminals.reduce((m, [h, b]) => {
+//       m[h] = b;
+//       return m;
+//     }, {}),
+//   };
+// }
+
+// // function makeRegex(rules, rule = '0') {
+// //   if (rules.terminals.hasOwnProperty(rule)) {
+// //     return rules.terminals[rule];
+// //   } else {
+// //     const internals = rules.nonterminals[rule]
+// //       .map((body) => body.map((sub) => makeRegex(rules, sub)).join(''))
+// //       .join('|');
+// //     return `(${internals})`;
+// //   }
+// // }
 
 // function makeRegex(rules, rule = '0') {
 //   if (rules.terminals.hasOwnProperty(rule)) {
@@ -1776,79 +1787,301 @@ function makeRules(lines) {
 //     const internals = rules.nonterminals[rule]
 //       .map((body) => body.map((sub) => makeRegex(rules, sub)).join(''))
 //       .join('|');
-//     return `(${internals})`;
+//     return `(?:${internals})`;
 //   }
 // }
 
-function makeRegex(rules, rule = '0') {
-  if (rules.terminals.hasOwnProperty(rule)) {
-    return rules.terminals[rule];
-  } else {
-    const internals = rules.nonterminals[rule]
-      .map((body) => body.map((sub) => makeRegex(rules, sub)).join(''))
-      .join('|');
-    return `(?:${internals})`;
-  }
-}
+// // function main() {
+// //   const input = fs.readFileSync('inputs/day19b')
+// //     .toString()
+// //     .trim()
+// //     .split('\r\n\r\n');
+// //   const rules = makeRules(input[0].split('\r\n'));
+
+// //   const pattern = `^${makeRegex(rules)}$`;
+// //   console.log(pattern);
+// //   const r = new RegExp(pattern);
+// //   const result = input[1].split('\r\n')
+// //     .filter(msg => r.test(msg))
+// //     .reduce((acc, _) => acc + 1, 0);
+// //   console.log(result);
+// // }
+
+// function patterns(rules) {
+//   const p42 = [];
+//   for (let i = 0; i < 10; ++i) {
+//     p42.push(`^${makeRegex(rules, '42')}{${i}}`);
+//   }
+//   const p31 = [];
+//   for (let i = 0; i < 10; ++i) {
+//     p31.push(`${makeRegex(rules, '31')}{${i}}$`);
+//   }
+//   return {
+//     42: p42,
+//     31: p31,
+//   }
+// }
 
 // function main() {
-//   const input = fs.readFileSync('inputs/day19b')
+//   const input = fs.readFileSync('inputs/day19')
 //     .toString()
 //     .trim()
 //     .split('\r\n\r\n');
 //   const rules = makeRules(input[0].split('\r\n'));
 
-//   const pattern = `^${makeRegex(rules)}$`;
-//   console.log(pattern);
-//   const r = new RegExp(pattern);
+//   const pats = patterns(rules);
+
 //   const result = input[1].split('\r\n')
-//     .filter(msg => r.test(msg))
-//     .reduce((acc, _) => acc + 1, 0);
+//     .map(msg => {
+//       for (let i = 1; i < 10; ++i) {
+//         const match = msg.match(new RegExp(pats[42][i]));
+//         if (!match) {
+//           return false;
+//         }
+//         const remainder = msg.slice(match[0].length);
+//         for (let j = 1; j < 10; ++j) {
+//           if (remainder.match(new RegExp(`${pats[42][j]}${pats[31][j]}`))) {
+//             return true;
+//           }
+//         }
+//       }
+//       return false;
+//     })
+//     .reduce((acc, cur) => acc + (cur ? 1 : 0), 0);
 //   console.log(result);
 // }
 
-function patterns(rules) {
-  const p42 = [];
-  for (let i = 0; i < 10; ++i) {
-    p42.push(`^${makeRegex(rules, '42')}{${i}}`);
+// ====================================
+
+function toBits(chars) {
+  return chars.reduce((acc, ch) => (acc * 2) + (ch === '#' ? 1 : 0), 0);
+}
+
+const seaMonster = [
+  '                  # '.split(''),
+  '#    ##    ##    ###'.split(''),
+  ' #  #  #  #  #  #   '.split(''),
+];
+
+class Tile {
+  constructor(id, data) {
+    this.id = id;
+    this.data = data;
   }
-  const p31 = [];
-  for (let i = 0; i < 10; ++i) {
-    p31.push(`${makeRegex(rules, '31')}{${i}}$`);
+
+  static fromText(text) {
+    const lines = text.split('\r\n');
+    let m = lines[0].match(/^Tile (\d+):$/);
+    if (!m) {
+      throw new Error('bad tile: ' + text);
+    }
+    return new Tile(Number.parseInt(m[1], 10), lines.slice(1).map((ln) => ln.split('')))
   }
-  return {
-    42: p42,
-    31: p31,
+
+  toString() {
+    return this.data.map((r) => r.join('')).join('\n');
+  }
+
+  top() {
+    return toBits(this.data[0]);
+  }
+
+  bottom() {
+    return toBits(this.data[this.data.length - 1]);
+  }
+
+  left() {
+    return toBits(this.data.map((r) => r[0]));
+  }
+
+  right() {
+    return toBits(this.data.map((r) => r[r.length - 1]));
+  }
+
+  flip() {
+    const copy = Array.from(this.data);
+    copy.reverse();
+    return new Tile(this.id, copy);
+  }
+
+  rotate() {
+    const rows = this.data.length;
+    const result = [];
+    for (let i = 0; i < rows; ++i) {
+      result.push(Array(rows));
+    }
+    for (let i = 0; i < rows; ++i) {
+      for (let j = 0; j < rows; ++j) {
+        result[j][rows - 1 - i] = this.data[i][j];
+      }
+    }
+    return new Tile(this.id, result);
+  }
+
+  transformations() {
+    const t90 = this.rotate();
+    const t180 = t90.rotate();
+    const t270 = t180.rotate();
+    return [
+      this,
+      t90,
+      t180,
+      t270,
+      this.flip(),
+      t90.flip(),
+      t180.flip(),
+      t270.flip(),
+    ];
+  }
+
+  removeBorders() {
+    const data = this.data.slice(1, this.data.length - 1)
+      .map((row) => row.slice(1, row.length - 1));
+    return new Tile(this.id, data);
+  }
+
+  static coalesce(tiles) {
+    const n = Math.sqrt(tiles.length);
+    const rows = tiles[0].data.length;
+    const data = [];
+    for (let strip = 0; strip < tiles.length; strip += n) {
+      const sTiles = tiles.slice(strip, strip + n);
+      for (let i = 0; i < rows; ++i) {
+        let row = sTiles.map(t => t.data[i])
+          .reduce((acc, row) => acc.concat(row), []);
+        data.push(row);
+      }
+    }
+    return new Tile('composite', data);
+  }
+
+  seaMonsterAt(row, col) {
+    for (let r = 0; r < seaMonster.length; ++r) {
+      for (let c = 0; c < seaMonster[0].length; ++c) {
+        if (seaMonster[r][c] === '#' && this.data[row + r][col + c] !== '#') {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  markSeaMonsterAt(row, col) {
+    for (let r = 0; r < seaMonster.length; ++r) {
+      for (let c = 0; c < seaMonster[0].length; ++c) {
+        if (seaMonster[r][c] === '#') {
+          this.data[row + r][col + c] = 'O';
+        }
+      }
+    }
+  }
+
+  markSeaMonsters() {
+    let found = false;
+    for (let i = 0; i < this.data.length - seaMonster.length; ++i) {
+      for (let j = 0; j < this.data[0].length - seaMonster[0].length; ++j) {
+        if (this.seaMonsterAt(i, j)) {
+          found = true;
+          this.markSeaMonsterAt(i, j);
+        }
+      }
+    }
+    return found;
+  }
+
+  roughness() {
+    let count = 0;
+    for (let i = 0; i < this.data.length; ++i) {
+      for (let j = 0; j < this.data[0].length; ++j) {
+        if (this.data[i][j] === '#') {
+          count += 1;
+        }
+      }
+    }
+    return count;
   }
 }
 
-function main() {
-  const input = fs.readFileSync('inputs/day19')
-    .toString()
-    .trim()
-    .split('\r\n\r\n');
-  const rules = makeRules(input[0].split('\r\n'));
+function partialValid(n, image) {
+  const current = image[image.length - 1];
+  const row = Math.floor((image.length - 1) / n);
+  const column = (image.length - 1) % n;
+  if (row > 0) {
+    const up = image[(row - 1) * n + column];
+    if (up.bottom() !== current.top()) {
+      return false;
+    }
+  }
+  if (column > 0) {
+    const left = image[row * n + (column - 1)];
+    if (left.right() !== current.left()) {
+      return false;
+    }
+  }
+  return true;
+}
 
-  const pats = patterns(rules);
-
-  const result = input[1].split('\r\n')
-    .map(msg => {
-      for (let i = 1; i < 10; ++i) {
-        const match = msg.match(new RegExp(pats[42][i]));
-        if (!match) {
-          return false;
-        }
-        const remainder = msg.slice(match[0].length);
-        for (let j = 1; j < 10; ++j) {
-          if (remainder.match(new RegExp(`${pats[42][j]}${pats[31][j]}`))) {
-            return true;
-          }
+function build(n, tiles) {
+  const queue = [[[], tiles]];
+  while (queue.length > 0) {
+    console.log(`current queue ${queue.length}`);
+    const [image, remaining] = queue.pop();
+    if (remaining.length === 0) {
+      return image;
+    }
+    for (let i = 0; i < remaining.length; ++i) {
+      const current = remaining[i];
+      const prefix = remaining.slice(0, i);
+      const suffix = remaining.slice(i + 1);
+      for (let transform of current.transformations()) {
+        const newImage = Array.from(image);
+        newImage.push(transform);
+        if (partialValid(n, newImage)) {
+          queue.unshift([newImage, Array.from(prefix).concat(suffix)]);
         }
       }
-      return false;
-    })
-    .reduce((acc, cur) => acc + (cur ? 1 : 0), 0);
-  console.log(result);
+    }
+  }
+  return null;
+}
+
+// function main() {
+//   const input = fs.readFileSync('inputs/day20')
+//     .toString()
+//     .trim()
+//     .split('\r\n\r\n')
+//     .map((t) => Tile.fromText(t));
+//   console.log(input.length);
+
+//   const n = Math.sqrt(input.length);
+
+//   const image = build(n, input);
+//   console.log(image.map((t) => t.id));
+//   const ids = [[0, 0], [0, n - 1], [n - 1, 0], [n - 1, n - 1]]
+//     .map(([r, c]) => r * n + c)
+//     .map((i) => image[i].id)
+//     .reduce((acc, cur) => acc * cur, 1);
+//   console.log(ids);
+// }
+
+function main() {
+  const input = fs.readFileSync('inputs/day20')
+    .toString()
+    .trim()
+    .split('\r\n\r\n')
+    .map((t) => Tile.fromText(t));
+  console.log(input.length);
+
+  const n = Math.sqrt(input.length);
+
+  const image = build(n, input);
+  const composite = Tile.coalesce(image.map((t) => t.removeBorders()));
+  for (let transformed of composite.transformations()) {
+    if (transformed.markSeaMonsters()) {
+      console.log(transformed.toString());
+      console.log(transformed.roughness());
+    }
+  }
 }
 
 // ====================================
