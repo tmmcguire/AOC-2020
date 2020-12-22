@@ -5,6 +5,7 @@ const fs = require('fs');
 const { type } = require('os');
 const { normalize } = require('path');
 const { nextTick, domain } = require('process');
+const { start } = require('repl');
 const { isNumber } = require('util');
 
 // ====================================
@@ -1643,99 +1644,211 @@ const { isNumber } = require('util');
 
 // ====================================
 
-// function parse(str) {
-//   const match = str.match(/\d+/);
-//   if (match) {
-//     return Number.parseInt(str, 10);
-//   } else {
-//     switch (str) {
-//       case '+', '*':
-//         return str;
-//       default:
-//         return false;
+// // function parse(str) {
+// //   const match = str.match(/\d+/);
+// //   if (match) {
+// //     return Number.parseInt(str, 10);
+// //   } else {
+// //     switch (str) {
+// //       case '+', '*':
+// //         return str;
+// //       default:
+// //         return false;
+// //     }
+// //   }
+// // }
+
+// function numberP(str) {
+//   return /^\d+$/.test(str);
+// }
+
+// class ExprStack {
+//   constructor() {
+//     this.stack = [];
+//     this.state = 'empty';
+//   }
+
+//   // push(elt) {
+//   //   if (typeof elt === 'number' && this.state === 'empty') {
+//   //     this.stack.push(elt);
+//   //     this.state = 'function';
+//   //   } else if (typeof elt === 'function' && this.state === 'function') {
+//   //     this.stack.push(elt);
+//   //     this.state = 'completing'
+//   //   } else if (typeof elt === 'number' && this.state === 'completing') {
+//   //     const op = this.stack.pop();
+//   //     const arg1 = this.stack.pop();
+//   //     this.stack.push(op(arg1, elt));
+//   //     this.state = 'function';
+//   //   } else {
+//   //     throw new Error('stack in wrong state');
+//   //   }
+//   // }
+
+//   push(elt) {
+//     if (numberP(elt)) {
+//       if (this.state === 'empty') {
+//         this.stack.push(Number.parseInt(elt, 10));
+//         this.state = 'number';
+//       } else if (this.state === 'plus') {
+//         const arg = this.stack.pop();
+//         this.stack.push(Number.parseInt(elt, 10) + arg);
+//         this.state = 'number';
+//       } else if (this.state === 'times') {
+//         this.stack.push(Number.parseInt(elt, 10));
+//         this.state = 'number';
+//       }
+//     } else if (elt === '+') {
+//       this.state = 'plus';
+//     } else if (elt === '*') {
+//       this.state = 'times';
 //     }
+//   }
+
+//   pop() {
+//     let value = this.stack.reduce((acc, cur) => acc * cur, 1);
+//     this.stack = [];
+//     this.state = 'empty';
+//     return value;
 //   }
 // }
 
-function numberP(str) {
-  return /^\d+$/.test(str);
-}
+// function evaluate(input) {
+//   let line = input;
+//   const stack = new ExprStack;
+//   while (line.length > 0) {
+//     const elt = line.shift();
+//     if (elt === '(') {
+//       stack.push(evaluate(line));
+//     } else if (elt === ')') {
+//       break;
+//     } else {
+//       stack.push(elt);
+//     }
+//   }
+//   return stack.pop();
+// }
 
-class ExprStack {
-  constructor() {
-    this.stack = [];
-    this.state = 'empty';
-  }
+// function main() {
+//   const input = fs.readFileSync('inputs/day18')
+//     .toString()
+//     .trim()
+//     .split('\r\n')
+//     .map((ln) => ln.split('').filter((elt) => elt !== ' '));
+//   const result = input.map(evaluate);
+//   console.log(result.reduce((acc, cur) => acc + BigInt(cur), 0n));
+// }
 
-  // push(elt) {
-  //   if (typeof elt === 'number' && this.state === 'empty') {
-  //     this.stack.push(elt);
-  //     this.state = 'function';
-  //   } else if (typeof elt === 'function' && this.state === 'function') {
-  //     this.stack.push(elt);
-  //     this.state = 'completing'
-  //   } else if (typeof elt === 'number' && this.state === 'completing') {
-  //     const op = this.stack.pop();
-  //     const arg1 = this.stack.pop();
-  //     this.stack.push(op(arg1, elt));
-  //     this.state = 'function';
-  //   } else {
-  //     throw new Error('stack in wrong state');
-  //   }
-  // }
+// ====================================
 
-  push(elt) {
-    if (numberP(elt)) {
-      if (this.state === 'empty') {
-        this.stack.push(Number.parseInt(elt, 10));
-        this.state = 'number';
-      } else if (this.state === 'plus') {
-        const arg = this.stack.pop();
-        this.stack.push(Number.parseInt(elt, 10) + arg);
-        this.state = 'number';
-      } else if (this.state === 'times') {
-        this.stack.push(Number.parseInt(elt, 10));
-        this.state = 'number';
-      }
-    } else if (elt === '+') {
-      this.state = 'plus';
-    } else if (elt === '*') {
-      this.state = 'times';
-    }
-  }
-
-  pop() {
-    let value = this.stack.reduce((acc, cur) => acc * cur, 1);
-    this.stack = [];
-    this.state = 'empty';
-    return value;
-  }
-}
-
-function evaluate(input) {
-  let line = input;
-  const stack = new ExprStack;
-  while (line.length > 0) {
-    const elt = line.shift();
-    if (elt === '(') {
-      stack.push(evaluate(line));
-    } else if (elt === ')') {
-      break;
+function makeRules(lines) {
+  const terminals = [];
+  const nonterminals = [];
+  lines.forEach((ln) => {
+    const [head, body] = ln.split(': ').map((s) => s.trim());
+    if (/"\w"/.test(body)) {
+      // terminal
+      terminals.push([head, body[1]]);
     } else {
-      stack.push(elt);
+      // nonterminal
+      nonterminals.push([
+        head,
+        body.split(' | ').map((seq) => seq.split(' '))
+      ]);
     }
+  });
+  return {
+    'terminals': terminals.reduce((m, [h, ch]) => {
+      m[h] = ch;
+      return m
+    }, {}),
+    'nonterminals': nonterminals.reduce((m, [h, b]) => {
+      m[h] = b;
+      return m;
+    }, {}),
+  };
+}
+
+// function makeRegex(rules, rule = '0') {
+//   if (rules.terminals.hasOwnProperty(rule)) {
+//     return rules.terminals[rule];
+//   } else {
+//     const internals = rules.nonterminals[rule]
+//       .map((body) => body.map((sub) => makeRegex(rules, sub)).join(''))
+//       .join('|');
+//     return `(${internals})`;
+//   }
+// }
+
+function makeRegex(rules, rule = '0') {
+  if (rules.terminals.hasOwnProperty(rule)) {
+    return rules.terminals[rule];
+  } else {
+    const internals = rules.nonterminals[rule]
+      .map((body) => body.map((sub) => makeRegex(rules, sub)).join(''))
+      .join('|');
+    return `(?:${internals})`;
   }
-  return stack.pop();
+}
+
+// function main() {
+//   const input = fs.readFileSync('inputs/day19b')
+//     .toString()
+//     .trim()
+//     .split('\r\n\r\n');
+//   const rules = makeRules(input[0].split('\r\n'));
+
+//   const pattern = `^${makeRegex(rules)}$`;
+//   console.log(pattern);
+//   const r = new RegExp(pattern);
+//   const result = input[1].split('\r\n')
+//     .filter(msg => r.test(msg))
+//     .reduce((acc, _) => acc + 1, 0);
+//   console.log(result);
+// }
+
+function patterns(rules) {
+  const p42 = [];
+  for (let i = 0; i < 10; ++i) {
+    p42.push(`^${makeRegex(rules, '42')}{${i}}`);
+  }
+  const p31 = [];
+  for (let i = 0; i < 10; ++i) {
+    p31.push(`${makeRegex(rules, '31')}{${i}}$`);
+  }
+  return {
+    42: p42,
+    31: p31,
+  }
 }
 
 function main() {
-  const input = fs.readFileSync('inputs/day18')
+  const input = fs.readFileSync('inputs/day19')
     .toString()
     .trim()
-    .split('\r\n')
-    .map((ln) => ln.split('').filter((elt) => elt !== ' '));
-  const result = input.map(evaluate);
-  console.log(result.reduce((acc, cur) => acc + BigInt(cur), 0n));
+    .split('\r\n\r\n');
+  const rules = makeRules(input[0].split('\r\n'));
+
+  const pats = patterns(rules);
+
+  const result = input[1].split('\r\n')
+    .map(msg => {
+      for (let i = 1; i < 10; ++i) {
+        const match = msg.match(new RegExp(pats[42][i]));
+        if (!match) {
+          return false;
+        }
+        const remainder = msg.slice(match[0].length);
+        for (let j = 1; j < 10; ++j) {
+          if (remainder.match(new RegExp(`${pats[42][j]}${pats[31][j]}`))) {
+            return true;
+          }
+        }
+      }
+      return false;
+    })
+    .reduce((acc, cur) => acc + (cur ? 1 : 0), 0);
+  console.log(result);
 }
 
 // ====================================
