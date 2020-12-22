@@ -1853,197 +1853,216 @@ const { isNumber } = require('util');
 
 // ====================================
 
-function toBits(chars) {
-  return chars.reduce((acc, ch) => (acc * 2) + (ch === '#' ? 1 : 0), 0);
-}
+// function toBits(chars) {
+//   return chars.reduce((acc, ch) => (acc * 2) + (ch === '#' ? 1 : 0), 0);
+// }
 
-const seaMonster = [
-  '                  # '.split(''),
-  '#    ##    ##    ###'.split(''),
-  ' #  #  #  #  #  #   '.split(''),
-];
+// const seaMonster = [
+//   '                  # '.split(''),
+//   '#    ##    ##    ###'.split(''),
+//   ' #  #  #  #  #  #   '.split(''),
+// ];
 
-class Tile {
-  constructor(id, data) {
-    this.id = id;
-    this.data = data;
-  }
+// class Tile {
+//   constructor(id, data) {
+//     this.id = id;
+//     this.data = data;
+//   }
 
-  static fromText(text) {
-    const lines = text.split('\r\n');
-    let m = lines[0].match(/^Tile (\d+):$/);
-    if (!m) {
-      throw new Error('bad tile: ' + text);
-    }
-    return new Tile(Number.parseInt(m[1], 10), lines.slice(1).map((ln) => ln.split('')))
-  }
+//   static fromText(text) {
+//     const lines = text.split('\r\n');
+//     let m = lines[0].match(/^Tile (\d+):$/);
+//     if (!m) {
+//       throw new Error('bad tile: ' + text);
+//     }
+//     return new Tile(Number.parseInt(m[1], 10), lines.slice(1).map((ln) => ln.split('')))
+//   }
 
-  toString() {
-    return this.data.map((r) => r.join('')).join('\n');
-  }
+//   toString() {
+//     return this.data.map((r) => r.join('')).join('\n');
+//   }
 
-  top() {
-    return toBits(this.data[0]);
-  }
+//   top() {
+//     return toBits(this.data[0]);
+//   }
 
-  bottom() {
-    return toBits(this.data[this.data.length - 1]);
-  }
+//   bottom() {
+//     return toBits(this.data[this.data.length - 1]);
+//   }
 
-  left() {
-    return toBits(this.data.map((r) => r[0]));
-  }
+//   left() {
+//     return toBits(this.data.map((r) => r[0]));
+//   }
 
-  right() {
-    return toBits(this.data.map((r) => r[r.length - 1]));
-  }
+//   right() {
+//     return toBits(this.data.map((r) => r[r.length - 1]));
+//   }
 
-  flip() {
-    const copy = Array.from(this.data);
-    copy.reverse();
-    return new Tile(this.id, copy);
-  }
+//   flip() {
+//     const copy = Array.from(this.data);
+//     copy.reverse();
+//     return new Tile(this.id, copy);
+//   }
 
-  rotate() {
-    const rows = this.data.length;
-    const result = [];
-    for (let i = 0; i < rows; ++i) {
-      result.push(Array(rows));
-    }
-    for (let i = 0; i < rows; ++i) {
-      for (let j = 0; j < rows; ++j) {
-        result[j][rows - 1 - i] = this.data[i][j];
-      }
-    }
-    return new Tile(this.id, result);
-  }
+//   rotate() {
+//     const rows = this.data.length;
+//     const result = [];
+//     for (let i = 0; i < rows; ++i) {
+//       result.push(Array(rows));
+//     }
+//     for (let i = 0; i < rows; ++i) {
+//       for (let j = 0; j < rows; ++j) {
+//         result[j][rows - 1 - i] = this.data[i][j];
+//       }
+//     }
+//     return new Tile(this.id, result);
+//   }
 
-  transformations() {
-    const t90 = this.rotate();
-    const t180 = t90.rotate();
-    const t270 = t180.rotate();
-    return [
-      this,
-      t90,
-      t180,
-      t270,
-      this.flip(),
-      t90.flip(),
-      t180.flip(),
-      t270.flip(),
-    ];
-  }
+//   transformations() {
+//     const t90 = this.rotate();
+//     const t180 = t90.rotate();
+//     const t270 = t180.rotate();
+//     return [
+//       this,
+//       t90,
+//       t180,
+//       t270,
+//       this.flip(),
+//       t90.flip(),
+//       t180.flip(),
+//       t270.flip(),
+//     ];
+//   }
 
-  removeBorders() {
-    const data = this.data.slice(1, this.data.length - 1)
-      .map((row) => row.slice(1, row.length - 1));
-    return new Tile(this.id, data);
-  }
+//   removeBorders() {
+//     const data = this.data.slice(1, this.data.length - 1)
+//       .map((row) => row.slice(1, row.length - 1));
+//     return new Tile(this.id, data);
+//   }
 
-  static coalesce(tiles) {
-    const n = Math.sqrt(tiles.length);
-    const rows = tiles[0].data.length;
-    const data = [];
-    for (let strip = 0; strip < tiles.length; strip += n) {
-      const sTiles = tiles.slice(strip, strip + n);
-      for (let i = 0; i < rows; ++i) {
-        let row = sTiles.map(t => t.data[i])
-          .reduce((acc, row) => acc.concat(row), []);
-        data.push(row);
-      }
-    }
-    return new Tile('composite', data);
-  }
+//   static coalesce(tiles) {
+//     const n = Math.sqrt(tiles.length);
+//     const rows = tiles[0].data.length;
+//     const data = [];
+//     for (let strip = 0; strip < tiles.length; strip += n) {
+//       const sTiles = tiles.slice(strip, strip + n);
+//       for (let i = 0; i < rows; ++i) {
+//         let row = sTiles.map(t => t.data[i])
+//           .reduce((acc, row) => acc.concat(row), []);
+//         data.push(row);
+//       }
+//     }
+//     return new Tile('composite', data);
+//   }
 
-  seaMonsterAt(row, col) {
-    for (let r = 0; r < seaMonster.length; ++r) {
-      for (let c = 0; c < seaMonster[0].length; ++c) {
-        if (seaMonster[r][c] === '#' && this.data[row + r][col + c] !== '#') {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
+//   seaMonsterAt(row, col) {
+//     for (let r = 0; r < seaMonster.length; ++r) {
+//       for (let c = 0; c < seaMonster[0].length; ++c) {
+//         if (seaMonster[r][c] === '#' && this.data[row + r][col + c] !== '#') {
+//           return false;
+//         }
+//       }
+//     }
+//     return true;
+//   }
 
-  markSeaMonsterAt(row, col) {
-    for (let r = 0; r < seaMonster.length; ++r) {
-      for (let c = 0; c < seaMonster[0].length; ++c) {
-        if (seaMonster[r][c] === '#') {
-          this.data[row + r][col + c] = 'O';
-        }
-      }
-    }
-  }
+//   markSeaMonsterAt(row, col) {
+//     for (let r = 0; r < seaMonster.length; ++r) {
+//       for (let c = 0; c < seaMonster[0].length; ++c) {
+//         if (seaMonster[r][c] === '#') {
+//           this.data[row + r][col + c] = 'O';
+//         }
+//       }
+//     }
+//   }
 
-  markSeaMonsters() {
-    let found = false;
-    for (let i = 0; i < this.data.length - seaMonster.length; ++i) {
-      for (let j = 0; j < this.data[0].length - seaMonster[0].length; ++j) {
-        if (this.seaMonsterAt(i, j)) {
-          found = true;
-          this.markSeaMonsterAt(i, j);
-        }
-      }
-    }
-    return found;
-  }
+//   markSeaMonsters() {
+//     let found = false;
+//     for (let i = 0; i < this.data.length - seaMonster.length; ++i) {
+//       for (let j = 0; j < this.data[0].length - seaMonster[0].length; ++j) {
+//         if (this.seaMonsterAt(i, j)) {
+//           found = true;
+//           this.markSeaMonsterAt(i, j);
+//         }
+//       }
+//     }
+//     return found;
+//   }
 
-  roughness() {
-    let count = 0;
-    for (let i = 0; i < this.data.length; ++i) {
-      for (let j = 0; j < this.data[0].length; ++j) {
-        if (this.data[i][j] === '#') {
-          count += 1;
-        }
-      }
-    }
-    return count;
-  }
-}
+//   roughness() {
+//     let count = 0;
+//     for (let i = 0; i < this.data.length; ++i) {
+//       for (let j = 0; j < this.data[0].length; ++j) {
+//         if (this.data[i][j] === '#') {
+//           count += 1;
+//         }
+//       }
+//     }
+//     return count;
+//   }
+// }
 
-function partialValid(n, image) {
-  const current = image[image.length - 1];
-  const row = Math.floor((image.length - 1) / n);
-  const column = (image.length - 1) % n;
-  if (row > 0) {
-    const up = image[(row - 1) * n + column];
-    if (up.bottom() !== current.top()) {
-      return false;
-    }
-  }
-  if (column > 0) {
-    const left = image[row * n + (column - 1)];
-    if (left.right() !== current.left()) {
-      return false;
-    }
-  }
-  return true;
-}
+// function partialValid(n, image) {
+//   const current = image[image.length - 1];
+//   const row = Math.floor((image.length - 1) / n);
+//   const column = (image.length - 1) % n;
+//   if (row > 0) {
+//     const up = image[(row - 1) * n + column];
+//     if (up.bottom() !== current.top()) {
+//       return false;
+//     }
+//   }
+//   if (column > 0) {
+//     const left = image[row * n + (column - 1)];
+//     if (left.right() !== current.left()) {
+//       return false;
+//     }
+//   }
+//   return true;
+// }
 
-function build(n, tiles) {
-  const queue = [[[], tiles]];
-  while (queue.length > 0) {
-    console.log(`current queue ${queue.length}`);
-    const [image, remaining] = queue.pop();
-    if (remaining.length === 0) {
-      return image;
-    }
-    for (let i = 0; i < remaining.length; ++i) {
-      const current = remaining[i];
-      const prefix = remaining.slice(0, i);
-      const suffix = remaining.slice(i + 1);
-      for (let transform of current.transformations()) {
-        const newImage = Array.from(image);
-        newImage.push(transform);
-        if (partialValid(n, newImage)) {
-          queue.unshift([newImage, Array.from(prefix).concat(suffix)]);
-        }
-      }
-    }
-  }
-  return null;
-}
+// function build(n, tiles) {
+//   const queue = [[[], tiles]];
+//   while (queue.length > 0) {
+//     console.log(`current queue ${queue.length}`);
+//     const [image, remaining] = queue.pop();
+//     if (remaining.length === 0) {
+//       return image;
+//     }
+//     for (let i = 0; i < remaining.length; ++i) {
+//       const current = remaining[i];
+//       const prefix = remaining.slice(0, i);
+//       const suffix = remaining.slice(i + 1);
+//       for (let transform of current.transformations()) {
+//         const newImage = Array.from(image);
+//         newImage.push(transform);
+//         if (partialValid(n, newImage)) {
+//           queue.unshift([newImage, Array.from(prefix).concat(suffix)]);
+//         }
+//       }
+//     }
+//   }
+//   return null;
+// }
+
+// // function main() {
+// //   const input = fs.readFileSync('inputs/day20')
+// //     .toString()
+// //     .trim()
+// //     .split('\r\n\r\n')
+// //     .map((t) => Tile.fromText(t));
+// //   console.log(input.length);
+
+// //   const n = Math.sqrt(input.length);
+
+// //   const image = build(n, input);
+// //   console.log(image.map((t) => t.id));
+// //   const ids = [[0, 0], [0, n - 1], [n - 1, 0], [n - 1, n - 1]]
+// //     .map(([r, c]) => r * n + c)
+// //     .map((i) => image[i].id)
+// //     .reduce((acc, cur) => acc * cur, 1);
+// //   console.log(ids);
+// // }
 
 // function main() {
 //   const input = fs.readFileSync('inputs/day20')
@@ -2056,32 +2075,98 @@ function build(n, tiles) {
 //   const n = Math.sqrt(input.length);
 
 //   const image = build(n, input);
-//   console.log(image.map((t) => t.id));
-//   const ids = [[0, 0], [0, n - 1], [n - 1, 0], [n - 1, n - 1]]
-//     .map(([r, c]) => r * n + c)
-//     .map((i) => image[i].id)
-//     .reduce((acc, cur) => acc * cur, 1);
-//   console.log(ids);
+//   const composite = Tile.coalesce(image.map((t) => t.removeBorders()));
+//   for (let transformed of composite.transformations()) {
+//     if (transformed.markSeaMonsters()) {
+//       console.log(transformed.toString());
+//       console.log(transformed.roughness());
+//     }
+//   }
 // }
 
-function main() {
-  const input = fs.readFileSync('inputs/day20')
-    .toString()
-    .trim()
-    .split('\r\n\r\n')
-    .map((t) => Tile.fromText(t));
-  console.log(input.length);
+// ====================================
 
-  const n = Math.sqrt(input.length);
+function union(s1, s2) {
+  return new Set([...s1, ...s2]);
+}
 
-  const image = build(n, input);
-  const composite = Tile.coalesce(image.map((t) => t.removeBorders()));
-  for (let transformed of composite.transformations()) {
-    if (transformed.markSeaMonsters()) {
-      console.log(transformed.toString());
-      console.log(transformed.roughness());
+function intersection(s1, s2) {
+  return new Set(
+    [...s1].filter(elt => s2.has(elt))
+  );
+}
+
+function difference(s1, s2) {
+  return new Set(
+    [...s1].filter(elt => !s2.has(elt))
+  );
+}
+
+function allerganMapping(input) {
+  const allergenMap = input.reduce((map, [ingredients, allergens]) => {
+    allergens.forEach((allergen) => {
+      const iSet = new Set(ingredients);
+      if (map.hasOwnProperty(allergen)) {
+        map[allergen] = intersection(map[allergen], iSet);
+      } else {
+        map[allergen] = iSet;
+      }
+    });
+    return map;
+  }, {});
+
+  const allergenMapping = Object.entries(allergenMap);
+  while (!allergenMapping.every(([a, i]) => i.size === 1)) {
+    const identified = allergenMapping.filter(([a, i]) => i.size === 1).reduce((s, [a, i]) => union(s, i), new Set());
+    for (let i = 0; i < allergenMapping.length; ++i) {
+      if (allergenMapping[i][1].size > 1) {
+        allergenMapping[i][1] = difference(allergenMapping[i][1], identified);
+      }
     }
   }
+
+  return allergenMapping.reduce((map, elt) => {
+    map[elt[0]] = elt[1];
+    return map;
+  }, {})
+}
+
+function main() {
+  const input = fs.readFileSync('inputs/day21')
+    .toString()
+    .trim()
+    .split('\r\n')
+    .map((ln) => {
+      const match = ln.match(/([^(]*) \(contains ([^)]*)\)/);
+      const ingredients = match[1].trim().split(' ');
+      const allergens = match[2].trim().split(', ');
+      return [ingredients, allergens];
+    });
+
+  const ingredients = input.map(([i, a]) => new Set(i)).reduce((s, i) => union(s, i), new Set());
+  const allergans = input.map(([i, a]) => new Set(a)).reduce((s, a) => union(s, a), new Set());
+  const allerganMap = allerganMapping(input);
+
+  // console.log(ingredients);
+  // console.log(allergans);
+  // console.log(allerganMap);
+
+  const badIngredients = Object.values(allerganMap).reduce((s, i) => union(s, i), new Set());
+  const goodIngredients = difference(ingredients, badIngredients);
+
+  const appearances = input.map(([ing, _]) =>
+    ing.filter((i) => goodIngredients.has(i))
+      .reduce((a, s) => a + 1, 0))
+    .reduce((a, s) => a + s, 0);
+  console.log(appearances);
+
+  console.log(allerganMap);
+  const x = Object.entries(allerganMap)
+    .map(([a, i]) => [a, [...i][0]])
+    .sort((a,b) => a[0].localeCompare(b[0]))
+    .map(([a,i]) => i)
+    .join(',');
+  console.log(x);
 }
 
 // ====================================
