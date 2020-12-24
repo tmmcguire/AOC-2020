@@ -2086,87 +2086,281 @@ const { isNumber } = require('util');
 
 // ====================================
 
-function union(s1, s2) {
-  return new Set([...s1, ...s2]);
+// function union(s1, s2) {
+//   return new Set([...s1, ...s2]);
+// }
+
+// function intersection(s1, s2) {
+//   return new Set(
+//     [...s1].filter(elt => s2.has(elt))
+//   );
+// }
+
+// function difference(s1, s2) {
+//   return new Set(
+//     [...s1].filter(elt => !s2.has(elt))
+//   );
+// }
+
+// function allerganMapping(input) {
+//   const allergenMap = input.reduce((map, [ingredients, allergens]) => {
+//     allergens.forEach((allergen) => {
+//       const iSet = new Set(ingredients);
+//       if (map.hasOwnProperty(allergen)) {
+//         map[allergen] = intersection(map[allergen], iSet);
+//       } else {
+//         map[allergen] = iSet;
+//       }
+//     });
+//     return map;
+//   }, {});
+
+//   const allergenMapping = Object.entries(allergenMap);
+//   while (!allergenMapping.every(([a, i]) => i.size === 1)) {
+//     const identified = allergenMapping.filter(([a, i]) => i.size === 1).reduce((s, [a, i]) => union(s, i), new Set());
+//     for (let i = 0; i < allergenMapping.length; ++i) {
+//       if (allergenMapping[i][1].size > 1) {
+//         allergenMapping[i][1] = difference(allergenMapping[i][1], identified);
+//       }
+//     }
+//   }
+
+//   return allergenMapping.reduce((map, elt) => {
+//     map[elt[0]] = elt[1];
+//     return map;
+//   }, {})
+// }
+
+// function main() {
+//   const input = fs.readFileSync('inputs/day21')
+//     .toString()
+//     .trim()
+//     .split('\r\n')
+//     .map((ln) => {
+//       const match = ln.match(/([^(]*) \(contains ([^)]*)\)/);
+//       const ingredients = match[1].trim().split(' ');
+//       const allergens = match[2].trim().split(', ');
+//       return [ingredients, allergens];
+//     });
+
+//   const ingredients = input.map(([i, a]) => new Set(i)).reduce((s, i) => union(s, i), new Set());
+//   const allergans = input.map(([i, a]) => new Set(a)).reduce((s, a) => union(s, a), new Set());
+//   const allerganMap = allerganMapping(input);
+
+//   // console.log(ingredients);
+//   // console.log(allergans);
+//   // console.log(allerganMap);
+
+//   const badIngredients = Object.values(allerganMap).reduce((s, i) => union(s, i), new Set());
+//   const goodIngredients = difference(ingredients, badIngredients);
+
+//   const appearances = input.map(([ing, _]) =>
+//     ing.filter((i) => goodIngredients.has(i))
+//       .reduce((a, s) => a + 1, 0))
+//     .reduce((a, s) => a + s, 0);
+//   console.log(appearances);
+
+//   console.log(allerganMap);
+//   const x = Object.entries(allerganMap)
+//     .map(([a, i]) => [a, [...i][0]])
+//     .sort((a,b) => a[0].localeCompare(b[0]))
+//     .map(([a,i]) => i)
+//     .join(',');
+//   console.log(x);
+// }
+
+// ====================================
+
+// function textToDeck(text) {
+//   return text.split('\r\n')
+//     .slice(1)
+//     .map((ln) => Number.parseInt(ln, 10));
+// }
+
+// function score(deck) {
+//   return deck.reverse()
+//     .map((val, ind) => val * (ind + 1))
+//     .reduce((acc, val) => acc + val, 0);
+// }
+
+// // function main() {
+// //   const input = fs.readFileSync('inputs/day22')
+// //     .toString()
+// //     .trim()
+// //     .split('\r\n\r\n');
+// //   const deck1 = textToDeck(input[0]);
+// //   const deck2 = textToDeck(input[1]);
+// //   while (deck1.length > 0 && deck2.length > 0) {
+// //     const card1 = deck1.shift();
+// //     const card2 = deck2.shift();
+// //     console.log(`1: ${card1} 2: ${card2}`);
+// //     if (card1 < card2) {
+// //       deck2.push(card2);
+// //       deck2.push(card1);
+// //     } else {
+// //       deck1.push(card1);
+// //       deck1.push(card2);
+// //     }
+// //   }
+// //   if (deck1.length > 0) {
+// //     console.log(`1: ${deck1}`);
+// //     console.log(score(deck1));
+// //   } else {
+// //     console.log(`2: ${deck2}`);
+// //     console.log(score(deck2));
+// //   }
+// // }
+
+// function recursiveCombatGame(gameNumber) {
+//   const seen = new Set();
+
+//   return function recursiveCombat(deck1, deck2) {
+//     console.log(`Game ${gameNumber}`);
+//     while (deck1.length > 0 && deck2.length > 0) {
+//       const deckStr = `${deck1.join('-')}/${deck2.join('-')}`;
+//       console.log(`Round ${seen.size + 1}: ${deckStr}`);
+//       if (seen.has(deckStr)) {
+//         return ['game', 1, deck1];
+//       }
+//       seen.add(deckStr);
+//       const card1 = deck1.shift();
+//       const card2 = deck2.shift();
+//       if (card1 <= deck1.length && card2 <= deck2.length) {
+//         // recursive game
+//         // console.log('recursive game');
+//         const result = recursiveCombatGame(++gameNumber)(
+//           Array.from(deck1).splice(0, card1),
+//           Array.from(deck2).splice(0, card2),
+//         );
+//         // console.log('end recursive game');
+//         switch (result[0]) {
+//           case 'round':
+//             if (result[1] === 1) {
+//               deck1.push(card1);
+//               deck1.push(card2);
+//             } else {
+//               deck2.push(card2);
+//               deck2.push(card1);
+//             }
+//             break;
+//           case 'game':
+//             deck1.push(card1);
+//             deck1.push(card2);
+//             break;
+//         }
+//       } else {
+//         if (card1 < card2) {
+//           deck2.push(card2);
+//           deck2.push(card1);
+//         } else {
+//           deck1.push(card1);
+//           deck1.push(card2);
+//         }
+//       }
+//     }
+//     if (deck1.length > 0) {
+//       return ['round', 1, deck1];
+//     } else {
+//       return ['round', 2, deck2];
+//     }
+//   };
+// }
+
+// function main() {
+//   const input = fs.readFileSync('inputs/day22')
+//     .toString()
+//     .trim()
+//     .split('\r\n\r\n');
+//   const deck1 = textToDeck(input[0]);
+//   const deck2 = textToDeck(input[1]);
+//   const result = recursiveCombatGame(1)(deck1, deck2);
+//   console.log(result);
+//   console.log(score(result[2]));
+// }
+
+// ====================================
+
+function circularSlice(ary, start, end) {
+  start = start % ary.length;
+  end = end % ary.length;
+  if (start < end) {
+    return [
+      ary.slice(start, end),
+      [...ary.slice(0, start), ...ary.slice(end)],
+    ];
+  } else {
+    return [
+      [...ary.slice(start), ...ary.slice(0, end)],
+      ary.slice(end, start),
+    ];
+  }
 }
 
-function intersection(s1, s2) {
-  return new Set(
-    [...s1].filter(elt => s2.has(elt))
-  );
+function circularInsert(ary, loc, elts) {
+  return [...ary.slice(0, loc), ...elts, ...ary.slice(loc)];
 }
 
-function difference(s1, s2) {
-  return new Set(
-    [...s1].filter(elt => !s2.has(elt))
-  );
-}
+const plusMod = (i, j, m) => (i + j) % m;
+const incMod = (i, m) => plusMod(i, 1, m);
+const minusMod = (i, j, m) => (i - j < 0) ? m - (j - i) : i - j;
+const decMod = (i, m) => minusMod(i, 1, m);
 
-function allerganMapping(input) {
-  const allergenMap = input.reduce((map, [ingredients, allergens]) => {
-    allergens.forEach((allergen) => {
-      const iSet = new Set(ingredients);
-      if (map.hasOwnProperty(allergen)) {
-        map[allergen] = intersection(map[allergen], iSet);
-      } else {
-        map[allergen] = iSet;
-      }
-    });
-    return map;
-  }, {});
+const inRangeMod = (start, end, value, m) => {
+  if (start < end) {
+    return (start <= value && value < end);
+  } else {
+    return ((0 <= value && value < end) || (start <= value && value < m));
+  }
+};
 
-  const allergenMapping = Object.entries(allergenMap);
-  while (!allergenMapping.every(([a, i]) => i.size === 1)) {
-    const identified = allergenMapping.filter(([a, i]) => i.size === 1).reduce((s, [a, i]) => union(s, i), new Set());
-    for (let i = 0; i < allergenMapping.length; ++i) {
-      if (allergenMapping[i][1].size > 1) {
-        allergenMapping[i][1] = difference(allergenMapping[i][1], identified);
-      }
-    }
+class GameState {
+  constructor(str) {
+    this.cups = str.split('').map(n => Number.parseInt(n, 10));
+    this.current = this.cups[0];
+    this.idMod = this.cups.reduce((max, cur) => (cur > max) ? cur : max, 0) + 1;
   }
 
-  return allergenMapping.reduce((map, elt) => {
-    map[elt[0]] = elt[1];
-    return map;
-  }, {})
+  move() {
+    console.log(`cups: ${this.toString()}`);
+
+    const currentId = this.cups.findIndex((cup) => cup === this.current);
+    const [removed, circle] = circularSlice(this.cups, currentId + 1, currentId + 4);
+    console.log(`pick up: ${removed}`);
+
+    let destination = decMod(this.current, this.idMod);
+    let destinationId = circle.findIndex((cup) => cup === destination);
+    while (destinationId === -1) {
+      destination = decMod(destination, this.idMod);
+      destinationId = circle.findIndex((cup) => cup === destination);
+    }
+    console.log(`destination: ${destination}`);
+
+    this.cups = circularInsert(circle, destinationId + 1, removed);
+
+    const idx = (this.cups.findIndex((cup) => cup === this.current) + 1) % this.cups.length;
+    this.current = this.cups[idx];
+  }
+
+  toString() {
+    return this.cups.map((cup) => (cup === this.current) ? `(${cup})` : `${cup}`).join();
+  }
+
+  finalOrder() {
+    const idx = this.cups.findIndex((cup) => cup === 1);
+    const start = incMod(idx, this.cups.length);
+    return [...this.cups.slice(start), ...this.cups.slice(0, idx)].join('');
+  }
 }
 
 function main() {
-  const input = fs.readFileSync('inputs/day21')
-    .toString()
-    .trim()
-    .split('\r\n')
-    .map((ln) => {
-      const match = ln.match(/([^(]*) \(contains ([^)]*)\)/);
-      const ingredients = match[1].trim().split(' ');
-      const allergens = match[2].trim().split(', ');
-      return [ingredients, allergens];
-    });
-
-  const ingredients = input.map(([i, a]) => new Set(i)).reduce((s, i) => union(s, i), new Set());
-  const allergans = input.map(([i, a]) => new Set(a)).reduce((s, a) => union(s, a), new Set());
-  const allerganMap = allerganMapping(input);
-
-  // console.log(ingredients);
-  // console.log(allergans);
-  // console.log(allerganMap);
-
-  const badIngredients = Object.values(allerganMap).reduce((s, i) => union(s, i), new Set());
-  const goodIngredients = difference(ingredients, badIngredients);
-
-  const appearances = input.map(([ing, _]) =>
-    ing.filter((i) => goodIngredients.has(i))
-      .reduce((a, s) => a + 1, 0))
-    .reduce((a, s) => a + s, 0);
-  console.log(appearances);
-
-  console.log(allerganMap);
-  const x = Object.entries(allerganMap)
-    .map(([a, i]) => [a, [...i][0]])
-    .sort((a,b) => a[0].localeCompare(b[0]))
-    .map(([a,i]) => i)
-    .join(',');
-  console.log(x);
+  const game = new GameState('389125467');
+  // const game = new GameState('186524973');
+  for (let i = 0; i < 100; ++i) {
+    // console.log(`--- move ${i+1} ---`)
+    game.move();
+  }
+  console.log(game.toString());
+  console.log(game.finalOrder());
 }
 
 // ====================================
