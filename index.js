@@ -2280,181 +2280,278 @@ const { isNumber } = require('util');
 
 // ====================================
 
-// function circularSlice(ary, start, end) {
-//   start = start % ary.length;
-//   end = end % ary.length;
-//   if (start < end) {
-//     return [
-//       ary.slice(start, end),
-//       [...ary.slice(0, start), ...ary.slice(end)],
-//     ];
-//   } else {
-//     return [
-//       [...ary.slice(start), ...ary.slice(0, end)],
-//       ary.slice(end, start),
-//     ];
-//   }
-// }
+// // function circularSlice(ary, start, end) {
+// //   start = start % ary.length;
+// //   end = end % ary.length;
+// //   if (start < end) {
+// //     return [
+// //       ary.slice(start, end),
+// //       [...ary.slice(0, start), ...ary.slice(end)],
+// //     ];
+// //   } else {
+// //     return [
+// //       [...ary.slice(start), ...ary.slice(0, end)],
+// //       ary.slice(end, start),
+// //     ];
+// //   }
+// // }
 
-// function circularInsert(ary, loc, elts) {
-//   return [...ary.slice(0, loc), ...elts, ...ary.slice(loc)];
-// }
+// // function circularInsert(ary, loc, elts) {
+// //   return [...ary.slice(0, loc), ...elts, ...ary.slice(loc)];
+// // }
 
-const plusMod = (i, j, m) => (i + j) % m;
-const incMod = (i, m) => plusMod(i, 1, m);
-const minusMod = (i, j, m) => (i - j < 0) ? m - (j - i) : i - j;
-const decMod = (i, m) => minusMod(i, 1, m);
+// const plusMod = (i, j, m) => (i + j) % m;
+// const incMod = (i, m) => plusMod(i, 1, m);
+// const minusMod = (i, j, m) => (i - j < 0) ? m - (j - i) : i - j;
+// const decMod = (i, m) => minusMod(i, 1, m);
+
+// // class GameState {
+// //   constructor(str) {
+// //     this.cups = str.split('').map(n => Number.parseInt(n, 10));
+// //     this.current = this.cups[0];
+// //     this.idMod = this.cups.reduce((max, cur) => (cur > max) ? cur : max, 0) + 1;
+// //     for (let i = this.idMod; i < 1000000; ++i) {
+// //       this.cups.push(i);
+// //     }
+// //     this.idMod = 1000000 + 1;
+// //     this.buffer = Array(3);
+// //   }
+
+// //   move() {
+// //     // console.log(`cups: ${this.toString()}`);
+
+// //     const currentId = this.cups.findIndex((cup) => cup === this.current);
+
+// //     const rStart = plusMod(currentId, 1, this.cups.length);
+// //     const rEnd = plusMod(currentId, 4, this.cups.length);
+// //     for (let i = 0; i < 3; ++i) {
+// //       this.buffer[i] = this.cups[plusMod(rStart, i, this.cups.length)];
+// //     }
+// //     // console.log(`pick up: ${this.buffer}`);
+
+// //     let destination = minusMod(this.current, 1, this.idMod);
+// //     if (destination === 0) {
+// //       destination = this.idMod - 1;
+// //     }
+// //     while (this.buffer.includes(destination)) {
+// //       destination = minusMod(destination, 1, this.idMod);
+// //       if (destination === 0) {
+// //         destination = this.idMod - 1;
+// //       }
+// //     }
+// //     // console.log(`destination: ${destination}`);
+
+// //     if (rStart < rEnd) {
+// //       this.cups.copyWithin(rStart, rEnd);
+// //     } else {
+// //       this.cups.copyWithin(0, rEnd, rStart);
+// //     }
+
+// //     const destinationId = incMod(this.cups.findIndex((cup) => cup === destination), this.cups.length);
+
+// //     this.cups.copyWithin(destinationId + 3, destinationId, this.cups.length - 3);
+// //     for (let i = 0; i < 3; ++i) {
+// //       this.cups[destinationId + i] = this.buffer[i];
+// //     }
+
+// //     const idx = incMod(this.cups.findIndex((cup) => cup === this.current) , this.cups.length);
+// //     this.current = this.cups[idx];
+// //   }
+
+// //   toString() {
+// //     return this.cups.map((cup) => (cup === this.current) ? `(${cup})` : `${cup}`).join();
+// //   }
+
+// //   finalOrder() {
+// //     const idx = this.cups.findIndex((cup) => cup === 1);
+// //     const start = incMod(idx, this.cups.length);
+// //     return [...this.cups.slice(start), ...this.cups.slice(0, idx)].join('');
+// //   }
+// // }
 
 // class GameState {
-//   constructor(str) {
-//     this.cups = str.split('').map(n => Number.parseInt(n, 10));
-//     this.current = this.cups[0];
-//     this.idMod = this.cups.reduce((max, cur) => (cur > max) ? cur : max, 0) + 1;
-//     for (let i = this.idMod; i < 1000000; ++i) {
-//       this.cups.push(i);
+//   constructor(text) {
+//     let ary = text.split('').map((ch) => Number.parseInt(ch, 10));
+//     let max = ary.reduce((max, cur) => (cur > max) ? cur : max);
+//     for (let i = max + 1; i < 1000001; ++i) {
+//       ary.push(i);
 //     }
-//     this.idMod = 1000000 + 1;
-//     this.buffer = Array(3);
+//     this.current = ary[0];
+//     this.max = ary[0];
+//     this.map = {};
+//     for (let i = 0; i < ary.length - 1; ++i) {
+//       if (this.max < ary[i + 1]) {
+//         this.max = ary[i + 1];
+//       }
+//       this.map[ary[i]] = ary[i + 1];
+//     }
+//     this.last = ary[ary.length - 1];
+//     this.map[this.last] = 'X';
+//   }
+
+//   toString() {
+//     const result = [`(${this.current})`];
+//     for (let cur = this.map[this.current]; cur !== 'X'; cur = this.map[cur]) {
+//       result.push(cur);
+//     }
+//     return result.join(' ');
 //   }
 
 //   move() {
 //     // console.log(`cups: ${this.toString()}`);
-
-//     const currentId = this.cups.findIndex((cup) => cup === this.current);
-
-//     const rStart = plusMod(currentId, 1, this.cups.length);
-//     const rEnd = plusMod(currentId, 4, this.cups.length);
-//     for (let i = 0; i < 3; ++i) {
-//       this.buffer[i] = this.cups[plusMod(rStart, i, this.cups.length)];
+//     const buffer = Array(3);
+//     let cur = this.current;
+//     for (let i = 0; i < 3; i++) {
+//       cur = this.map[cur];
+//       buffer[i] = cur;
 //     }
-//     // console.log(`pick up: ${this.buffer}`);
+//     this.map[this.current] = this.map[buffer[2]];
+//     // console.log(`pick up: ${buffer}`);
 
-//     let destination = minusMod(this.current, 1, this.idMod);
-//     if (destination === 0) {
-//       destination = this.idMod - 1;
+//     let dest = this.current - 1;
+//     if (dest < 1) { dest = this.max; }
+//     while (buffer.includes(dest)) {
+//       dest = dest - 1;
+//       if (dest < 1) { dest = this.max; }
 //     }
-//     while (this.buffer.includes(destination)) {
-//       destination = minusMod(destination, 1, this.idMod);
-//       if (destination === 0) {
-//         destination = this.idMod - 1;
-//       }
+//     // console.log(`destination: ${dest}`);
+
+//     this.map[buffer[2]] = this.map[dest];
+//     const current = this.current;
+//     this.current = this.map[current];
+//     if (this.map[dest] === 'X') {
+//       this.last = buffer[2];
 //     }
-//     // console.log(`destination: ${destination}`);
-
-//     if (rStart < rEnd) {
-//       this.cups.copyWithin(rStart, rEnd);
-//     } else {
-//       this.cups.copyWithin(0, rEnd, rStart);
-//     }
-
-//     const destinationId = incMod(this.cups.findIndex((cup) => cup === destination), this.cups.length);
-
-//     this.cups.copyWithin(destinationId + 3, destinationId, this.cups.length - 3);
-//     for (let i = 0; i < 3; ++i) {
-//       this.cups[destinationId + i] = this.buffer[i];
-//     }
-
-//     const idx = incMod(this.cups.findIndex((cup) => cup === this.current) , this.cups.length);
-//     this.current = this.cups[idx];
-//   }
-
-//   toString() {
-//     return this.cups.map((cup) => (cup === this.current) ? `(${cup})` : `${cup}`).join();
-//   }
+//     this.map[dest] = buffer[0];
+//     this.map[this.last] = current;
+//     this.map[current] = 'X';
+//     this.last = current;
+// }
 
 //   finalOrder() {
-//     const idx = this.cups.findIndex((cup) => cup === 1);
-//     const start = incMod(idx, this.cups.length);
-//     return [...this.cups.slice(start), ...this.cups.slice(0, idx)].join('');
+//     const result = [];
+//     for (let i = 1; this.map[i] !== 'X'; i = this.map[i]) {
+//       result.push(this.map[i].toString());
+//     }
+//     if (this.current !== 1) {
+//       for (let i = this.current; i !== 1; i = this.map[i]) {
+//         result.push(i.toString());
+//       }
+//     }
+//     return result.join('');
 //   }
 // }
 
-class GameState {
-  constructor(text) {
-    let ary = text.split('').map((ch) => Number.parseInt(ch, 10));
-    let max = ary.reduce((max, cur) => (cur > max) ? cur : max);
-    for (let i = max + 1; i < 1000001; ++i) {
-      ary.push(i);
-    }
-    this.current = ary[0];
-    this.max = ary[0];
-    this.map = {};
-    for (let i = 0; i < ary.length - 1; ++i) {
-      if (this.max < ary[i + 1]) {
-        this.max = ary[i + 1];
-      }
-      this.map[ary[i]] = ary[i + 1];
-    }
-    this.last = ary[ary.length - 1];
-    this.map[this.last] = 'X';
-  }
+// function main() {
+//   // const game = new GameState('389125467');
+//   const game = new GameState('186524973');
+//   for (let i = 0; i < 10000000; ++i) {
+//     // console.log(`--- move ${i + 1} ---`);
+//     game.move();
+//   }
+//   // console.log(game.toString());
+//   // console.log(game.finalOrder());
+//   const one = game.map[1];
+//   const two = game.map[one];
+//   console.log(`${one}, ${two}`);
+//   console.log(BigInt(one) * BigInt(two));
+// }
 
-  toString() {
-    const result = [`(${this.current})`];
-    for (let cur = this.map[this.current]; cur !== 'X'; cur = this.map[cur]) {
-      result.push(cur);
-    }
-    return result.join(' ');
-  }
+// ====================================
 
-  move() {
-    // console.log(`cups: ${this.toString()}`);
-    const buffer = Array(3);
-    let cur = this.current;
-    for (let i = 0; i < 3; i++) {
-      cur = this.map[cur];
-      buffer[i] = cur;
-    }
-    this.map[this.current] = this.map[buffer[2]];
-    // console.log(`pick up: ${buffer}`);
+// See https://www.redblobgames.com/grids/hexagons/#coordinates
+const CUBE_DIRECTIONS = {
+  ne: [+1, -1, 0],
+  e: [+1, 0, -1],
+  se: [0, +1, -1],
+  sw: [-1, +1, 0],
+  w: [-1, 0, +1],
+  nw: [0, -1, +1],
+};
 
-    let dest = this.current - 1;
-    if (dest < 1) { dest = this.max; }
-    while (buffer.includes(dest)) {
-      dest = dest - 1;
-      if (dest < 1) { dest = this.max; }
-    }
-    // console.log(`destination: ${dest}`);
-
-    this.map[buffer[2]] = this.map[dest];
-    const current = this.current;
-    this.current = this.map[current];
-    if (this.map[dest] === 'X') {
-      this.last = buffer[2];
-    }
-    this.map[dest] = buffer[0];
-    this.map[this.last] = current;
-    this.map[current] = 'X';
-    this.last = current;
+function addCoord(a, b) {
+  return a.map((av, aidx) => av + b[aidx]);
 }
 
-  finalOrder() {
-    const result = [];
-    for (let i = 1; this.map[i] !== 'X'; i = this.map[i]) {
-      result.push(this.map[i].toString());
+function transform(direction, location) {
+  return addCoord(CUBE_DIRECTIONS[direction], location);
+}
+
+function neighbors(location) {
+  return Object.values(CUBE_DIRECTIONS)
+    .map((dir) => addCoord(dir, location));
+}
+
+function locateTile(line) {
+  let location = [0, 0, 0];
+  while (line.length > 0) {
+    if (line.startsWith('e') || line.startsWith('w')) {
+      location = transform(line.substring(0, 1), location);
+      line = line.substring(1);
+    } else {
+      location = transform(line.substring(0, 2), location);
+      line = line.substring(2);
     }
-    if (this.current !== 1) {
-      for (let i = this.current; i !== 1; i = this.map[i]) {
-        result.push(i.toString());
-      }
-    }
-    return result.join('');
   }
+  return location;
+}
+
+function blackNeighbors(blackSet, location) {
+  return neighbors(location)
+    .filter((hex) => blackSet.has(hex.toString()))
+    .length;
 }
 
 function main() {
-  // const game = new GameState('389125467');
-  const game = new GameState('186524973');
-  for (let i = 0; i < 10000000; ++i) {
-    // console.log(`--- move ${i + 1} ---`);
-    game.move();
+  const input = fs.readFileSync('inputs/day24')
+    .toString()
+    .trim()
+    .split('\r\n');
+
+  const seen = {};
+  let black = input.map(locateTile)
+    .map(loc => {
+      const locS = loc.toString();
+      seen[locS] = loc;
+      return locS;
+    })
+    .reduce((black, location) => {
+      if (black.has(location)) {
+        black.delete(location);
+        return black;
+      } else {
+        return black.add(location);
+      }
+    }, new Set());
+
+  console.log(black.size);
+
+  for (let i = 0; i < 100; ++i) {
+    const arena = Array.from(black.values())
+      .map((locS) => seen[locS])
+      .map(neighbors)
+      .reduce((set, hexs) => {
+        return hexs.reduce((set, hex) => {
+          const locS = hex.toString();
+          seen[locS] = hex;
+          return set.add(locS);
+        }, set);
+      }, new Set([...black]));
+
+    black = [...arena].map(str => [str, seen[str]])
+      .filter(([str, loc]) => {
+        const n = blackNeighbors(black, loc);
+        if (black.has(str)) {
+          return n !== 0 && n <= 2;
+        } else {
+          return n === 2;
+        }
+      })
+      .reduce((black, [str, _]) => black.add(str), new Set());
+
+    console.log(black.size);
   }
-  // console.log(game.toString());
-  // console.log(game.finalOrder());
-  const one = game.map[1];
-  const two = game.map[one];
-  console.log(`${one}, ${two}`);
-  console.log(BigInt(one) * BigInt(two));
+
 }
 
 // ====================================
