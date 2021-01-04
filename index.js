@@ -2459,99 +2459,125 @@ const { isNumber } = require('util');
 
 // ====================================
 
-// See https://www.redblobgames.com/grids/hexagons/#coordinates
-const CUBE_DIRECTIONS = {
-  ne: [+1, -1, 0],
-  e: [+1, 0, -1],
-  se: [0, +1, -1],
-  sw: [-1, +1, 0],
-  w: [-1, 0, +1],
-  nw: [0, -1, +1],
-};
+// // See https://www.redblobgames.com/grids/hexagons/#coordinates
+// const CUBE_DIRECTIONS = {
+//   ne: [+1, -1, 0],
+//   e: [+1, 0, -1],
+//   se: [0, +1, -1],
+//   sw: [-1, +1, 0],
+//   w: [-1, 0, +1],
+//   nw: [0, -1, +1],
+// };
 
-function addCoord(a, b) {
-  return a.map((av, aidx) => av + b[aidx]);
-}
+// function addCoord(a, b) {
+//   return a.map((av, aidx) => av + b[aidx]);
+// }
 
-function transform(direction, location) {
-  return addCoord(CUBE_DIRECTIONS[direction], location);
-}
+// function transform(direction, location) {
+//   return addCoord(CUBE_DIRECTIONS[direction], location);
+// }
 
-function neighbors(location) {
-  return Object.values(CUBE_DIRECTIONS)
-    .map((dir) => addCoord(dir, location));
-}
+// function neighbors(location) {
+//   return Object.values(CUBE_DIRECTIONS)
+//     .map((dir) => addCoord(dir, location));
+// }
 
-function locateTile(line) {
-  let location = [0, 0, 0];
-  while (line.length > 0) {
-    if (line.startsWith('e') || line.startsWith('w')) {
-      location = transform(line.substring(0, 1), location);
-      line = line.substring(1);
-    } else {
-      location = transform(line.substring(0, 2), location);
-      line = line.substring(2);
-    }
+// function locateTile(line) {
+//   let location = [0, 0, 0];
+//   while (line.length > 0) {
+//     if (line.startsWith('e') || line.startsWith('w')) {
+//       location = transform(line.substring(0, 1), location);
+//       line = line.substring(1);
+//     } else {
+//       location = transform(line.substring(0, 2), location);
+//       line = line.substring(2);
+//     }
+//   }
+//   return location;
+// }
+
+// function blackNeighbors(blackSet, location) {
+//   return neighbors(location)
+//     .filter((hex) => blackSet.has(hex.toString()))
+//     .length;
+// }
+
+// function main() {
+//   const input = fs.readFileSync('inputs/day24')
+//     .toString()
+//     .trim()
+//     .split('\r\n');
+
+//   const seen = {};
+//   let black = input.map(locateTile)
+//     .map(loc => {
+//       const locS = loc.toString();
+//       seen[locS] = loc;
+//       return locS;
+//     })
+//     .reduce((black, location) => {
+//       if (black.has(location)) {
+//         black.delete(location);
+//         return black;
+//       } else {
+//         return black.add(location);
+//       }
+//     }, new Set());
+
+//   console.log(black.size);
+
+//   for (let i = 0; i < 100; ++i) {
+//     const arena = Array.from(black.values())
+//       .map((locS) => seen[locS])
+//       .map(neighbors)
+//       .reduce((set, hexs) => {
+//         return hexs.reduce((set, hex) => {
+//           const locS = hex.toString();
+//           seen[locS] = hex;
+//           return set.add(locS);
+//         }, set);
+//       }, new Set([...black]));
+
+//     black = [...arena].map(str => [str, seen[str]])
+//       .filter(([str, loc]) => {
+//         const n = blackNeighbors(black, loc);
+//         if (black.has(str)) {
+//           return n !== 0 && n <= 2;
+//         } else {
+//           return n === 2;
+//         }
+//       })
+//       .reduce((black, [str, _]) => black.add(str), new Set());
+
+//     console.log(black.size);
+//   }
+
+// }
+
+// ====================================
+
+function findLoopSize(snum, pkey) {
+  let loop = 0;
+  let value = 1;
+  while (value !== pkey) {
+    value = (value * snum) % 20201227;
+    loop += 1;
   }
-  return location;
-}
-
-function blackNeighbors(blackSet, location) {
-  return neighbors(location)
-    .filter((hex) => blackSet.has(hex.toString()))
-    .length;
+  return loop;
 }
 
 function main() {
-  const input = fs.readFileSync('inputs/day24')
-    .toString()
-    .trim()
-    .split('\r\n');
-
-  const seen = {};
-  let black = input.map(locateTile)
-    .map(loc => {
-      const locS = loc.toString();
-      seen[locS] = loc;
-      return locS;
-    })
-    .reduce((black, location) => {
-      if (black.has(location)) {
-        black.delete(location);
-        return black;
-      } else {
-        return black.add(location);
-      }
-    }, new Set());
-
-  console.log(black.size);
-
-  for (let i = 0; i < 100; ++i) {
-    const arena = Array.from(black.values())
-      .map((locS) => seen[locS])
-      .map(neighbors)
-      .reduce((set, hexs) => {
-        return hexs.reduce((set, hex) => {
-          const locS = hex.toString();
-          seen[locS] = hex;
-          return set.add(locS);
-        }, set);
-      }, new Set([...black]));
-
-    black = [...arena].map(str => [str, seen[str]])
-      .filter(([str, loc]) => {
-        const n = blackNeighbors(black, loc);
-        if (black.has(str)) {
-          return n !== 0 && n <= 2;
-        } else {
-          return n === 2;
-        }
-      })
-      .reduce((black, [str, _]) => black.add(str), new Set());
-
-    console.log(black.size);
+  // const PKEY = [5764801, 17807724];
+  const PKEY = [9093927, 11001876];
+  const SNUM = 7;
+  const loopSizes = PKEY.map((pkey) => findLoopSize(7, pkey));
+  console.log(loopSizes);
+  let eKey = PKEY[0];
+  let value = 1;
+  for (let i = 0; i < loopSizes[1]; ++i) {
+    value = (value * eKey) % 20201227;
   }
-
+  console.log(value);
 }
 
 // ====================================
